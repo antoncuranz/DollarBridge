@@ -36,16 +36,23 @@ export default function PaymentTable({
   }
 
   async function mutatePayment(url: string, method: "POST" | "DELETE", title: string, description?: string) {
-    const response = await fetch(url, {method})
+    try {
+      const response = await fetch(url, {method})
 
-    if (!response.ok)
+      if (!response.ok)
+        toast({
+          title,
+          description: description || await response.text() || response.statusText
+        })
+
+      if (response.ok)
+        router.refresh()
+    } catch (error) {
       toast({
         title,
-        description: description || await response.text() || response.statusText
+        description: error instanceof Error ? error.message : "Please try again."
       })
-
-    if (response.ok)
-      router.refresh()
+    }
   }
 
   async function processPayment(payment: Payment) {
