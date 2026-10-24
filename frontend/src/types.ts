@@ -66,6 +66,7 @@ export type Transaction = {
   credits: CreditTransaction[];
   ignore: boolean | null;
   exchange_rate: number | null;
+  cashback_exchange_id: number | null;
 };
 
 export type TransactionAmountMap = Record<number, number | null>;
@@ -111,6 +112,8 @@ export type Exchange = {
   amount_eur: number | null;
   paid_eur: number;
   fees_eur: number | null;
+  cashback_transaction_id: number | null;
+  cashback_transaction_description: string | null;
   payments: ExchangePayment[];
 };
 

@@ -200,11 +200,11 @@ class PaymentService:
         largest_tx.fees_and_risk_eur += eur_err
         session.add(largest_tx)
     def _calc_fees_and_risk(self, session: Session, tx: Transaction, payment: Payment, exchange_payments: List[ExchangePayment], payment_amount_eur: Decimal) -> int:
-        neutral_sum = self._calc_neutral_sum(exchange_payments)
-        eur_usd_exchanged = Decimal(payment.amount_usd - neutral_sum) / payment_amount_eur
-        
         if tx.amount_eur == 0:
             return 0
+
+        neutral_sum = self._calc_neutral_sum(exchange_payments)
+        eur_usd_exchanged = Decimal(payment.amount_usd - neutral_sum) / payment_amount_eur
 
         amount_usd = self.balance_service.calc_transaction_remaining(session, tx)
         value_eur_exchanged = amount_usd / eur_usd_exchanged

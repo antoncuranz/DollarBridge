@@ -1,10 +1,10 @@
 import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sqlmodel import Session, select, func
 
-from models import Payment, ExchangePayment, Exchange
+from models import Payment, ExchangePayment, Exchange, Transaction
 
 
 class ExchangeRepository:
@@ -27,13 +27,34 @@ class ExchangeRepository:
         return session.exec(stmt).first()
 
     def create_exchange(self, session: Session, date: datetime.date, amount_usd: int, exchange_rate: Decimal,
-                        amount_eur: int, paid_eur: int, fees_eur: int) -> Exchange:
+                        amount_eur: int, paid_eur: int, fees_eur: int,
+                        cashback_transaction_id: int | None = None) -> Exchange:
         exchange = Exchange(
             date=date, amount_usd=amount_usd, exchange_rate=exchange_rate, amount_eur=amount_eur,
-            paid_eur=paid_eur, fees_eur=fees_eur
+            paid_eur=paid_eur, fees_eur=fees_eur, cashback_transaction_id=cashback_transaction_id
         )
         session.add(exchange)
         return exchange
+
+    def get_cashback_exchange(self, session: Session, transaction_id: int) -> Optional[Exchange]:
+        stmt = select(Exchange).where(Exchange.cashback_transaction_id == transaction_id)
+        return session.exec(stmt).first()
+
+    def get_cashback_exchange_ids(self, session: Session, transaction_ids: List[int]) -> Dict[int, int]:
+        if not transaction_ids:
+            return {}
+        stmt = select(Exchange.cashback_transaction_id, Exchange.id).where(
+            Exchange.cashback_transaction_id.in_(transaction_ids)
+        )
+        return {transaction_id: exchange_id for transaction_id, exchange_id in session.exec(stmt).all()}
+
+    def get_cashback_transaction_descriptions(self, session: Session, exchange_ids: List[int]) -> Dict[int, str]:
+        if not exchange_ids:
+            return {}
+        stmt = select(Exchange.id, Transaction.description).join(
+            Transaction, Transaction.id == Exchange.cashback_transaction_id
+        ).where(Exchange.id.in_(exchange_ids))
+        return {exchange_id: description for exchange_id, description in session.exec(stmt).all()}
 
     #### EXCHANGE PAYMENTS ####
     

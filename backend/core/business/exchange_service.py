@@ -26,6 +26,11 @@ class ExchangeService:
     def get_exchanges(self, session: Session, usable: bool | None = None) -> List[Exchange]:
         return self.store.get_exchanges(session, usable)
 
+    def get_cashback_transaction_descriptions(self, session: Session, exchanges: List[Exchange]) -> dict[int, str]:
+        return self.store.get_cashback_transaction_descriptions(
+            session, [exchange.id for exchange in exchanges if exchange.id is not None]
+        )
+
     def create_exchange(self, session: Session, exchange: CreateExchange) -> Exchange:
         if exchange.paid_eur == 0:  # neutral Exchange => won't affect avg. exchange rate of Payment
             exchange = self.store.create_exchange(
@@ -51,6 +56,9 @@ class ExchangeService:
         if not exchange:
             raise HTTPException(status_code=404)
 
+        if exchange.cashback_transaction_id is not None:
+            raise HTTPException(status_code=409, detail="Undo cashback on the linked transaction instead")
+
         if not self.store.get_exchange_payments_by_exchange(session, exchange_id):
             session.delete(exchange)
             session.commit()
@@ -62,6 +70,8 @@ class ExchangeService:
         exchange = self.store.get_exchange(session, exchange_id)
         if not payment or not exchange:
             raise HTTPException(status_code=404)
+        if exchange.cashback_transaction_id is not None:
+            raise HTTPException(status_code=409, detail="Cashback exchanges cannot be assigned to payments")
 
         if amount == 0:
             self.store.delete_exchange_payment(session, exchange_id, payment_id)

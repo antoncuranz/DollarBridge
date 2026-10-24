@@ -23,6 +23,8 @@ class ExchangeTO(SQLModel):
     fees_eur: int | None
     import_id: str | None
     actual_id: str | None
+    cashback_transaction_id: int | None
+    cashback_transaction_description: str | None = None
     payments: List[ExchangePaymentTO]
 
 
@@ -30,7 +32,14 @@ class ExchangeTO(SQLModel):
 def get_exchanges(session: Annotated[Session, Depends(get_session)],
                   exchange_service: Annotated[ExchangeService, Depends()],
                   usable: bool | None = None):
-    return exchange_service.get_exchanges(session, usable)
+    exchanges = exchange_service.get_exchanges(session, usable)
+    descriptions = exchange_service.get_cashback_transaction_descriptions(session, exchanges)
+    return [
+        ExchangeTO.model_validate(exchange, update={
+            "cashback_transaction_description": descriptions.get(exchange.id),
+        })
+        for exchange in exchanges
+    ]
 
 
 @router.post("", response_model=ExchangeTO)

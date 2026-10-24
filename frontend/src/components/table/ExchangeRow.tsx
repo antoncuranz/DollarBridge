@@ -23,19 +23,23 @@ export default function ExchangeRow({
     return exchange.payments.map(ep => ep.amount).reduce((a, b) => a + b, 0)
   }
 
+  const isCashback = exchange.cashback_transaction_id != null
+  const remoteName = isCashback ? <>Cashback <span className="font-normal">{exchange.cashback_transaction_description || "Transaction"}</span></> : exchange.exchange_rate.toString()
+  const purpose = isCashback ? "" : formatAmount(exchange.amount_eur) + " € + " + formatAmount(exchange.fees_eur) + " € fees"
+
   return (
-    <TableRow date={exchange.date} remoteName={exchange.exchange_rate.toString()} purpose={formatAmount(exchange.amount_eur) + " € + " + formatAmount(exchange.fees_eur) + " € fees"}>
+    <TableRow date={exchange.date} remoteName={remoteName} purpose={purpose}>
       <div>
         { selected ?
           <Button variant="outline" size="icon" onClick={unselectExchange}>
             <Undo2 className="h-4 w-4" />
           </Button>
           :
-          <Button variant="outline" size="icon" disabled={disabled} onClick={selectExchange}>
+          <Button variant="outline" size="icon" disabled={disabled || exchange.cashback_transaction_id != null} onClick={selectExchange}>
             <Cable className="h-4 w-4" />
           </Button>
         }
-        <Button variant="outline" size="icon" className="ml-2" disabled={disabled || isAppliedToPayment()} onClick={deleteExchange}>
+        <Button variant="outline" size="icon" className="ml-2" disabled={disabled || isAppliedToPayment() || exchange.cashback_transaction_id != null} onClick={deleteExchange}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>

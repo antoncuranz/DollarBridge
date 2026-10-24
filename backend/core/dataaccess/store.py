@@ -119,8 +119,17 @@ class Store:
     def get_exchange(self, session: Session, exchange_id: int) -> Optional[Exchange]:
         return self.exchange_repository.get_exchange(session, exchange_id)
 
-    def create_exchange(self, session: Session, date: datetime.date, amount_usd: int, exchange_rate: Decimal, amount_eur: int, paid_eur: int, fees_eur: int) -> Exchange:
-        return self.exchange_repository.create_exchange(session, date, amount_usd, exchange_rate, amount_eur, paid_eur, fees_eur)
+    def create_exchange(self, session: Session, date: datetime.date, amount_usd: int, exchange_rate: Decimal, amount_eur: int, paid_eur: int, fees_eur: int, cashback_transaction_id: int | None = None) -> Exchange:
+        return self.exchange_repository.create_exchange(session, date, amount_usd, exchange_rate, amount_eur, paid_eur, fees_eur, cashback_transaction_id)
+
+    def get_cashback_exchange(self, session: Session, transaction_id: int) -> Optional[Exchange]:
+        return self.exchange_repository.get_cashback_exchange(session, transaction_id)
+
+    def get_cashback_exchange_ids(self, session: Session, transaction_ids: List[int]) -> dict[int, int]:
+        return self.exchange_repository.get_cashback_exchange_ids(session, transaction_ids)
+
+    def get_cashback_transaction_descriptions(self, session: Session, exchange_ids: List[int]) -> dict[int, str]:
+        return self.exchange_repository.get_cashback_transaction_descriptions(session, exchange_ids)
 
     def get_exchange_payments_by_exchange(self, session: Session, exchange_id: int) -> List[ExchangePayment]:
         return self.exchange_repository.get_exchange_payments_by_exchange(session, exchange_id)

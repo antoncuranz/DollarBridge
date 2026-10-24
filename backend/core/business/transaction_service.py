@@ -20,6 +20,9 @@ class TransactionService:
 
     def get_transactions_with_guessed_amount(self, session: Session, user: User, account_id: int = None, paid: bool | None = None) -> List[TransactionWithGuessedAmount]:
         transactions = self.store.get_transactions(session, user, account_id, paid)
+        cashback_exchange_ids = self.store.get_cashback_exchange_ids(
+            session, [transaction.id for transaction in transactions if transaction.id is not None]
+        )
 
         def map_transaction(transaction: Transaction):
             guessed_amount_eur = self.exchangerate.guess_amount_eur(session, transaction)
@@ -29,7 +32,8 @@ class TransactionService:
 
             return TransactionWithGuessedAmount.model_validate(transaction, update={
                 "guessed_amount_eur": guessed_amount_eur,
-                "exchange_rate": exchange_rate
+                "exchange_rate": exchange_rate,
+                "cashback_exchange_id": cashback_exchange_ids.get(transaction.id),
             })
 
         return [map_transaction(tx) for tx in transactions]
@@ -43,6 +47,63 @@ class TransactionService:
         transaction.amount_eur = amount_eur
         session.add(transaction)
         session.commit()
+
+        if transaction.actual_id is not None:
+            self.data_export.update_transaction(session, user, transaction.account.id, transaction)
+
+    def mark_cashback(self, session: Session, user: User, tx_id: int):
+        transaction = self.store.get_transaction(session, user, tx_id)
+        if not transaction:
+            raise HTTPException(status_code=404)
+
+        if transaction.status_enum != Transaction.Status.POSTED or transaction.amount_usd <= 0:
+            raise HTTPException(status_code=400, detail="Only posted transactions with a positive USD amount can be marked as cashback")
+
+        if self.store.get_cashback_exchange(session, transaction.id) is not None:
+            return
+
+        self.store.create_exchange(
+            session,
+            date=transaction.date,
+            amount_usd=transaction.amount_usd,
+            exchange_rate=Decimal(0),
+            amount_eur=0,
+            paid_eur=0,
+            fees_eur=0,
+            cashback_transaction_id=transaction.id,
+        )
+
+        amount_changed = transaction.amount_eur != 0
+        transaction.amount_eur = 0
+        session.add(transaction)
+        try:
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+
+        if amount_changed and transaction.actual_id is not None:
+            self.data_export.update_transaction(session, user, transaction.account.id, transaction)
+
+    def undo_cashback(self, session: Session, user: User, tx_id: int):
+        transaction = self.store.get_transaction(session, user, tx_id)
+        if not transaction:
+            raise HTTPException(status_code=404)
+
+        exchange = self.store.get_cashback_exchange(session, transaction.id)
+        if not exchange:
+            raise HTTPException(status_code=400, detail="Transaction is not marked as cashback")
+        if self.store.get_exchange_payments_by_exchange(session, exchange.id):
+            raise HTTPException(status_code=409, detail="Cashback exchange is still assigned to payments")
+
+        transaction.amount_eur = None
+        session.add(transaction)
+        session.delete(exchange)
+        try:
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
 
         if transaction.actual_id is not None:
             self.data_export.update_transaction(session, user, transaction.account.id, transaction)

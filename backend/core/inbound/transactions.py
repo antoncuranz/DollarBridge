@@ -5,7 +5,7 @@ from typing import Annotated, List
 from fastapi import APIRouter, Depends, status
 from sqlmodel import SQLModel, Session
 
-from auth import get_current_user
+from auth import get_current_user, require_super_user
 from core.business.transaction_service import TransactionService
 from models import User, get_session
 
@@ -34,6 +34,7 @@ class TransactionTO(SQLModel):
     guessed_amount_eur: int | None
     credits: List[CreditTransactionTO]
     exchange_rate: Decimal | None
+    cashback_exchange_id: int | None
 
 @router.get("", response_model=List[TransactionTO])
 def get_transactions(user: Annotated[User, Depends(get_current_user)],
@@ -49,3 +50,21 @@ def update_transaction(user: Annotated[User, Depends(get_current_user)],
                        transaction_service: Annotated[TransactionService, Depends()],
                        tx_id: int, amount_eur: int | None = None):
     transaction_service.update_transaction(session, user, tx_id, amount_eur)
+
+
+@router.post("/{tx_id}/cashback", status_code=status.HTTP_204_NO_CONTENT,
+             dependencies=[Depends(require_super_user)])
+def mark_cashback(user: Annotated[User, Depends(get_current_user)],
+                  session: Annotated[Session, Depends(get_session)],
+                  transaction_service: Annotated[TransactionService, Depends()],
+                  tx_id: int):
+    transaction_service.mark_cashback(session, user, tx_id)
+
+
+@router.post("/{tx_id}/undo-cashback", status_code=status.HTTP_204_NO_CONTENT,
+             dependencies=[Depends(require_super_user)])
+def undo_cashback(user: Annotated[User, Depends(get_current_user)],
+                  session: Annotated[Session, Depends(get_session)],
+                  transaction_service: Annotated[TransactionService, Depends()],
+                  tx_id: int):
+    transaction_service.undo_cashback(session, user, tx_id)

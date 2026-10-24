@@ -15,7 +15,7 @@ export default function TableRow({
 }: {
   account?: Account,
   date: string,
-  remoteName: string,
+  remoteName: React.ReactNode,
   purpose: string,
   children?: React.ReactNode,
   onClick?: MouseEventHandler<HTMLTableRowElement> | undefined;

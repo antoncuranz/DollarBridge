@@ -129,6 +129,7 @@ class Exchange(SQLModel, table=True):
     fees_eur: int | None
     import_id: str | None = Field(unique=True)
     actual_id: str | None = Field(unique=True)
+    cashback_transaction_id: int | None = Field(default=None, foreign_key="transaction.id", unique=True)
     payments: List["ExchangePayment"] = Relationship(cascade_delete=True)
 
 
@@ -183,6 +184,7 @@ class TransactionWithGuessedAmount(TransactionBase):
     guessed_amount_eur: int | None
     credits: List["CreditTransaction"]
     exchange_rate: Decimal | None
+    cashback_exchange_id: int | None
     
 
 class Credit(SQLModel, table=True):
