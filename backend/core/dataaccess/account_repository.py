@@ -23,10 +23,11 @@ class AccountRepository:
     def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: int | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
                        autopay_offset: int | None, icon: str | None, color: str | None,
-                       target_spend: int | None) -> Account:
+                       target_spend: int | None, active: bool = True) -> Account:
         account = Account(user_id=user.id, bank_account_id=bank_account_id, actual_id=actual_id,
                           plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
-                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend)
+                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
+                          active=active)
         session.add(account)
         return account
 

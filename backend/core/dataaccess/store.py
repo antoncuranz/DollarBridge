@@ -42,10 +42,12 @@ class Store:
 
     def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: int | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
-                       autopay_offset: int | None, icon: str | None, color: str | None, target_spend: int | None) -> Account:
+                       autopay_offset: int | None, icon: str | None, color: str | None, target_spend: int | None,
+                       active: bool = True) -> Account:
         return self.account_repository.create_account(session, user, bank_account_id=bank_account_id, actual_id=actual_id,
                           plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
-                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend)
+                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
+                          active=active)
 
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
         return self.account_repository.get_all_bank_accounts(session)

@@ -20,7 +20,7 @@ export default async function BalancesWidget({
 
   return (
     <>
-      {accounts.filter(myAccounts).map(account =>
+      {accounts.filter(account => account.active).filter(myAccounts).map(account =>
         <div key={account.id} className="card-balance-container">
           <Separator className="balance-separator mb-4 mt-4"/>
           <CardBalance account={account} accountBalances={accountBalances}/>

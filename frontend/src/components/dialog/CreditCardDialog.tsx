@@ -9,6 +9,7 @@ import BankAccountSelector from "@/components/dialog/BankAccountSelector.tsx";
 import {useToast} from "@/components/ui/use-toast.ts";
 import {Account, BankAccount, PlaidConnection} from "@/types.ts";
 import {useUser} from "@/components/provider/UserProvider.tsx";
+import {Switch} from "@/components/ui/switch.tsx";
 
 export default function CreditCardDialog({
   connections, bank_accounts, open, onClose, account
@@ -29,6 +30,7 @@ export default function CreditCardDialog({
   const [targetSpend, setTargetSpend] = useState<number|null>(null)
   const [bankAccountId, setBankAccountId] = useState<number|null>(null)
   const [plaidAccountId, setPlaidAccountId] = useState<number|null>(null)
+  const [active, setActive] = useState(true)
 
   const { toast } = useToast()
   const { username } = useUser()
@@ -48,6 +50,7 @@ export default function CreditCardDialog({
     setTargetSpend(account?.target_spend ?? null)
     setBankAccountId(account?.bank_account_id ?? null)
     setPlaidAccountId(account?.plaid_account_id ?? null)
+    setActive(account?.active ?? true)
   }, [account])
 
   async function onSaveButtonClick() {
@@ -68,6 +71,7 @@ export default function CreditCardDialog({
         bank_account_id: bankAccountId,
         plaid_account_id: plaidAccountId,
         actual_id: actualId.length > 0 ? actualId : null,
+        active: active,
       })
     })
 
@@ -161,6 +165,12 @@ export default function CreditCardDialog({
               Plaid Connection
             </Label>
             <PlaidAccountSelector connections={connections} username={getUsername()} value={plaidAccountId} onValueChange={setPlaidAccountId}/>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="active" className="text-right">
+              Active
+            </Label>
+            <Switch id="active" className="col-span-3" checked={active} onCheckedChange={setActive}/>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="actual_id" className="text-right">

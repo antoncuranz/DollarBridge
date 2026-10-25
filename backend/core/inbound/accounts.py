@@ -24,6 +24,7 @@ class AccountTO(SQLModel):
     icon: str | None
     color: str | None
     target_spend: int | None
+    active: bool
 
 @router.get("", response_model=List[AccountTO])
 def get_accounts(user: Annotated[User, Depends(get_current_user)],

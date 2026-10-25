@@ -20,6 +20,7 @@ class CreateAccount(SQLModel):
     bank_account_id: int | None
     plaid_account_id: int | None
     actual_id: str | None
+    active: bool = True
 
 
 class CreateBankAccount(SQLModel):
@@ -57,7 +58,8 @@ class AccountService:
                           actual_id=create_account.actual_id, plaid_account_id=create_account.plaid_account_id,
                           name=create_account.name, institution=create_account.institution,
                           due_day=create_account.due_day, autopay_offset=create_account.autopay_offset,
-                          icon=create_account.icon, color=create_account.color, target_spend=create_account.target_spend)
+                          icon=create_account.icon, color=create_account.color, target_spend=create_account.target_spend,
+                          active=create_account.active)
         session.commit()
         return account
     
@@ -76,6 +78,7 @@ class AccountService:
         account.bank_account_id = create_account.bank_account_id
         account.plaid_account_id = create_account.plaid_account_id
         account.actual_id = create_account.actual_id
+        account.active = create_account.active
         session.commit()
 
     def get_bank_accounts(self, session: Session, user: User) -> List[BankAccountTO]:

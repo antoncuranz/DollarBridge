@@ -78,6 +78,7 @@ class Account(SQLModel, table=True):
     icon: str | None
     color: str | None
     target_spend: int | None
+    active: bool = True
 
 
 class PaymentBase(SQLModel):
