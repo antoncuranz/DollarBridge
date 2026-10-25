@@ -6,9 +6,9 @@ from models import Account, User
 
 class DatesRepository:
     def get_all_accounts(self, session: Session) -> List[Account]:
-        stmt = select(Account).order_by(Account.id)
+        stmt = select(Account).where(Account.active.is_(True)).order_by(Account.id)
         return session.exec(stmt).all()
     
     def get_accounts_of_user(self, session: Session, user: User) -> List[Account]:
-        stmt = select(Account).where(Account.user_id == user.id).order_by(Account.id)
+        stmt = select(Account).where((Account.user_id == user.id) & Account.active.is_(True)).order_by(Account.id)
         return session.exec(stmt).all()

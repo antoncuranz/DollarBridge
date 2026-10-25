@@ -3,6 +3,7 @@
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {Tabs, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";
 import {Account} from "@/types.ts";
+import {useEffect} from "react";
 import {useStore} from "@/store.ts";
 
 interface Props {
@@ -11,6 +12,11 @@ interface Props {
 
 const AccountSelectorClient = ({accounts}: Props) => {
   const { currentAccount, setCurrentAccount } = useStore()
+
+  useEffect(() => {
+    if (currentAccount != null && !accounts.some(account => account.id === currentAccount.id))
+      setCurrentAccount(null)
+  }, [accounts, currentAccount, setCurrentAccount])
 
   function setCurrentAccountById(id: string) {
     const acct = accounts.find(a => a.id == parseInt(id))

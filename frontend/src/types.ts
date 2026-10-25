@@ -17,6 +17,7 @@ export type Account = {
   icon: string | null;
   color: string | null;
   target_spend: number | null;
+  active: boolean;
 };
 
 export type BankAccount = {

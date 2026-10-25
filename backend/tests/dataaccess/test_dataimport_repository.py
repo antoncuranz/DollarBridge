@@ -27,6 +27,16 @@ def test_get_account(session: Session):
     assert account.id == account_id
 
 
+def test_get_all_accounts_excludes_inactive_accounts(session: Session):
+    inactive_account = session.exec(select(Account).where(Account.id == 2)).one()
+    inactive_account.active = False
+    session.commit()
+
+    accounts = under_test.get_all_accounts(session)
+
+    assert [account.id for account in accounts] == [1]
+
+
 def test_get_pending_payment(session: Session):
     # Arrange
     account_id = 1

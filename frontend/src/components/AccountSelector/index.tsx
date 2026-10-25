@@ -3,7 +3,7 @@ import {fetchAccounts, getCurrentUser} from "@/requests.ts";
 
 export default async function AccountsSelector() {
   const username = await getCurrentUser()
-  const accounts = (await fetchAccounts()).filter(account => account.user.name == username)
+  const accounts = (await fetchAccounts()).filter(account => account.user.name == username && account.active)
 
   return <AccountSelectorClient accounts={accounts}/>
 }

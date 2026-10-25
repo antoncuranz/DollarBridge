@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function Page() {
   const username = await getCurrentUser()
-  const accounts = (await fetchAccounts()).filter(account => account.user.name === username)
+  const accounts = (await fetchAccounts()).filter(account => account.user.name === username && account.active)
 
   return <StatementMatchPageClient accounts={accounts}/>
 }

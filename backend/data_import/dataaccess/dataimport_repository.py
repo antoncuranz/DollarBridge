@@ -14,7 +14,7 @@ class DataImportRepository:
         return session.exec(stmt).first()
     
     def get_all_accounts(self, session: Session) -> List[Account]:
-        return session.exec(select(Account)).all()
+        return session.exec(select(Account).where(Account.active.is_(True))).all()
     
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
         return session.exec(select(BankAccount)).all()
