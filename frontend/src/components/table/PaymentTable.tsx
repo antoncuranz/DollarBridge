@@ -16,15 +16,40 @@ export default function PaymentTable({
 }) {
   const [paymentSelection, setPaymentSelection] = useState<Payment>()
   const [epDialogOpen, setEpDialogOpen] = useState(false)
+  const [linkingCashback, setLinkingCashback] = useState(false)
 
-  const { exchangeSelection } = useStore()
+  const { exchangeSelection, setExchangeSelection } = useStore()
   const { toast } = useToast();
   const router = useRouter();
 
-  function openExchangePaymentDialog(payment: Payment) {
-    if (exchangeSelection != null) {
+  async function selectPayment(payment: Payment) {
+    if (exchangeSelection == null || linkingCashback)
+      return
+
+    if (exchangeSelection.cashback_transaction_id == null) {
       setPaymentSelection(payment)
       setEpDialogOpen(true)
+      return
+    }
+
+    setLinkingCashback(true)
+    try {
+      const response = await fetch(
+        `/api/exchanges/${exchangeSelection.id}?amount=${exchangeSelection.amount_usd}&payment=${payment.id}`,
+        {method: "PUT"}
+      )
+      if (!response.ok) {
+        const body = await response.json().catch(() => null)
+        toast({title: "Could not link cashback", description: body?.detail || response.statusText})
+        return
+      }
+
+      setExchangeSelection(null)
+      router.refresh()
+    } catch (error) {
+      toast({title: "Could not link cashback", description: error instanceof Error ? error.message : "Please try again."})
+    } finally {
+      setLinkingCashback(false)
     }
   }
 
@@ -81,11 +106,12 @@ export default function PaymentTable({
                                         onProcessPaymentClick={() => processPayment(payment)}
                                         onUnprocessPaymentClick={() => unprocessPayment(payment)}
                                         onDeletePaymentClick={() => deletePayment(payment)}
-                                        onClick={() => openExchangePaymentDialog(payment)}/>
+                                        onClick={() => void selectPayment(payment)}/>
         )}
       </div>
-      <ExchangePaymentDialog open={epDialogOpen} onClose={onEpDialogClose} exchange={exchangeSelection!}
-                             payment={paymentSelection!}/>
+      {exchangeSelection != null && paymentSelection != null &&
+        <ExchangePaymentDialog open={epDialogOpen} onClose={onEpDialogClose} exchange={exchangeSelection.id}
+                               payment={paymentSelection}/>}
     </>
   )
 }

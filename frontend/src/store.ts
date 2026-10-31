@@ -1,10 +1,10 @@
 import {create, StateCreator} from 'zustand'
-import {Account, Credit, TransactionAmountMap} from "@/types.ts";
+import {Account, Credit, Exchange, TransactionAmountMap} from "@/types.ts";
 
 type SelectionSlice = {
   currentAccount: Account | null;
   creditSelection: Credit | null;
-  exchangeSelection: number | null;
+  exchangeSelection: Exchange | null;
   setCurrentAccount: (value: SelectionSlice["currentAccount"]) => void;
   setCreditSelection: (value: SelectionSlice["creditSelection"], accounts: Account[]) => void;
   setExchangeSelection: (value: SelectionSlice["exchangeSelection"]) => void;

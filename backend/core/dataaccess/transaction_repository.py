@@ -10,6 +10,9 @@ class TransactionRepository:
         stmt = select(Transaction).where(Transaction.id == tx_id)
         return session.exec(stmt).first()  # TODO: check user!
 
+    def get_transaction_account_id(self, session: Session, tx_id: int) -> int | None:
+        return session.exec(select(Transaction.account_id).where(Transaction.id == tx_id)).first()
+
     def get_transactions(self, session: Session, user: User, account_id: int = None, paid: bool | None = None) -> List[Transaction]:
         query = (Account.user_id == user.id)
 

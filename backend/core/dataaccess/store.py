@@ -66,6 +66,9 @@ class Store:
     def get_transaction(self, session: Session, user: User, tx_id: int) -> Optional[Transaction]:
         return self.transaction_repository.get_transaction(session, user, tx_id)
 
+    def get_transaction_account_id(self, session: Session, tx_id: int) -> int | None:
+        return self.transaction_repository.get_transaction_account_id(session, tx_id)
+
     def get_transactions(self, session: Session, user: User, account_id: int = None, paid: bool | None = None) -> List[Transaction]:
         return self.transaction_repository.get_transactions(session, user, account_id, paid)
 

@@ -35,7 +35,7 @@ export default function ExchangeRow({
             <Undo2 className="h-4 w-4" />
           </Button>
           :
-          <Button variant="outline" size="icon" disabled={disabled || exchange.cashback_transaction_id != null} onClick={selectExchange}>
+          <Button variant="outline" size="icon" disabled={disabled} onClick={selectExchange}>
             <Cable className="h-4 w-4" />
           </Button>
         }

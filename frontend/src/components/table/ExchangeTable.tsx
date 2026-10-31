@@ -30,9 +30,9 @@ export default function ExchangeTable({
   return (
     <div className="w-full relative">
       {exchanges.map(exchange =>
-        <ExchangeRow key={exchange.id} exchange={exchange} selected={exchangeSelection == exchange.id}
+        <ExchangeRow key={exchange.id} exchange={exchange} selected={exchangeSelection?.id == exchange.id}
                      disabled={exchangeSelection != null}
-                     selectExchange={() => setExchangeSelection(exchange.id)}
+                     selectExchange={() => setExchangeSelection(exchange)}
                      deleteExchange={() => deleteExchange(exchange.id)}
                      unselectExchange={() => setExchangeSelection(null)}/>
       )}

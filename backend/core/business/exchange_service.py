@@ -70,13 +70,18 @@ class ExchangeService:
         exchange = self.store.get_exchange(session, exchange_id)
         if not payment or not exchange:
             raise HTTPException(status_code=404)
-        if exchange.cashback_transaction_id is not None:
-            raise HTTPException(status_code=409, detail="Cashback exchanges cannot be assigned to payments")
-
         if amount == 0:
             self.store.delete_exchange_payment(session, exchange_id, payment_id)
             session.commit()
             return
+
+        if exchange.cashback_transaction_id is not None:
+            if self.store.get_transaction_account_id(session, exchange.cashback_transaction_id) != payment.account_id:
+                raise HTTPException(status_code=409, detail="Cashback exchange and payment must belong to the same account")
+            if amount != exchange.amount_usd:
+                raise HTTPException(status_code=400, detail="Cashback exchange must be assigned in full")
+            if any(link.payment_id != payment_id for link in self.store.get_exchange_payments_by_exchange(session, exchange_id)):
+                raise HTTPException(status_code=409, detail="Cashback exchange is already assigned to another payment")
 
         current_amount = self.store.get_exchange_payment_amount(session, exchange_id, payment_id)
 
