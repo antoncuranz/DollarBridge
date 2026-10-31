@@ -26,6 +26,7 @@ class BalanceService:
         return balance
 
     def calc_exchange_remaining(self, session: Session, exchange: Exchange, include_pending=False, include_posted=False) -> int:
+        assert exchange.id is not None
         balance = exchange.amount_usd
         query = self.store.get_exchange_payments_by_exchange(session, exchange.id)
 
@@ -40,6 +41,7 @@ class BalanceService:
         return balance
 
     def calc_credit_remaining(self, session: Session, credit: Credit) -> int:
+        assert credit.id is not None
         balance = credit.amount_usd
 
         query = self.store.get_credit_transactions_by_credit(session, credit.id)
@@ -53,6 +55,7 @@ class BalanceService:
         return balance
 
     def calc_transaction_remaining(self, session: Session, tx: Transaction) -> int:
+        assert tx.id is not None
         balance = tx.amount_usd
 
         query = self.store.get_credit_transactions_by_transaction(session, tx.id)
@@ -66,6 +69,7 @@ class BalanceService:
         return balance
 
     def calc_payment_remaining(self, session: Session, payment: Payment) -> int:
+        assert payment.id is not None
         balance = payment.amount_usd
 
         query = self.store.get_exchange_payments_by_payment(session, payment.id)
@@ -82,6 +86,7 @@ class BalanceService:
         result = {}
         accounts = self.store.get_all_accounts(session) if user.super_user else self.store.get_accounts_of_user(session, user)
         for account in accounts:
+            assert account.id is not None
             posted_tx = self.store.get_posted_transaction_amount(session, account.id)
             posted_credits = self.store.get_posted_credit_amount(session, account.id)
             posted_payments = self.store.get_posted_payment_amount(session, account.id)
@@ -103,6 +108,7 @@ class BalanceService:
 
         balance = 0
         for tx in transactions:
+            assert tx.id is not None
             amount = tx.amount_usd
             for ct in self.store.get_credit_transactions_by_transaction(session, tx.id):
                 amount -= ct.amount
@@ -161,6 +167,7 @@ class BalanceService:
         exchange_rate_weighted_sum = Decimal(0)
 
         for tx in transactions:
+            exchange_rate: Decimal | None
             if tx.amount_eur == 0:
                 continue
             elif tx.amount_eur is not None:

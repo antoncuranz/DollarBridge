@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, col, select, func
 
 from models import Transaction, User, Account
 
@@ -13,7 +13,7 @@ class TransactionRepository:
     def get_transaction_account_id(self, session: Session, tx_id: int) -> int | None:
         return session.exec(select(Transaction.account_id).where(Transaction.id == tx_id)).first()
 
-    def get_transactions(self, session: Session, user: User, account_id: int = None, paid: bool | None = None) -> List[Transaction]:
+    def get_transactions(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None) -> List[Transaction]:
         query = (Account.user_id == user.id)
 
         if paid is True:
@@ -24,30 +24,30 @@ class TransactionRepository:
         if account_id is not None:
             query = query & (Transaction.account_id == account_id)
 
-        stmt = select(Transaction).join(Account).where(query).order_by(Transaction.date.desc(), Transaction.id.desc())
-        return session.exec(stmt).all()
+        stmt = select(Transaction).join(Account).where(query).order_by(col(Transaction.date).desc(), col(Transaction.id).desc())
+        return list(session.exec(stmt).all())
 
     def get_paid_transactions_by_payment(self, session: Session, payment_id: int) -> List[Transaction]:
         stmt = select(Transaction).join(Account).where(
             (Transaction.payment_id == payment_id) &
             (Transaction.status == Transaction.Status.PAID.value)
         )
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_posted_transactions_by_account(self, session: Session, account_id: int) -> List[Transaction]:
         stmt = select(Transaction).where(
             (Transaction.status == Transaction.Status.POSTED.value) &
             (Transaction.account_id == account_id)
-        ).order_by(Transaction.date, Transaction.id)
-        return session.exec(stmt).all()
+        ).order_by(col(Transaction.date), col(Transaction.id))
+        return list(session.exec(stmt).all())
 
     def get_posted_transactions_missing_amount_eur_by_account(self, session: Session, account_id: int) -> List[Transaction]:
         stmt = select(Transaction).where(
-            (Transaction.status == Transaction.Status.POSTED.value) &
-            (Transaction.account_id == account_id) &
-            Transaction.amount_eur.is_(None)
-        ).order_by(Transaction.date, Transaction.id)
-        return session.exec(stmt).all()
+            (col(Transaction.status) == Transaction.Status.POSTED.value) &
+            (col(Transaction.account_id) == account_id) &
+            col(Transaction.amount_eur).is_(None)
+        ).order_by(col(Transaction.date), col(Transaction.id))
+        return list(session.exec(stmt).all())
 
     def get_posted_transaction_amount(self, session: Session, account_id: int) -> int:
         stmt = select(func.sum(Transaction.amount_usd)).where(
@@ -57,22 +57,22 @@ class TransactionRepository:
 
     def get_pending_transaction_amount(self, session: Session, account_id: int) -> int:
         stmt = select(func.sum(Transaction.amount_usd)).where(
-            (Transaction.account_id == account_id) & (Transaction.status == Transaction.Status.PENDING.value) &
-            Transaction.ignore.is_not(True)
+            (col(Transaction.account_id) == account_id) & (col(Transaction.status) == Transaction.Status.PENDING.value) &
+            col(Transaction.ignore).is_not(True)
         )
         return session.exec(stmt).first() or 0
 
     def get_all_posted_transactions(self, session: Session) -> List[Transaction]:
         stmt = select(Transaction).where(Transaction.status == Transaction.Status.POSTED.value)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_all_pending_transactions(self, session: Session) -> List[Transaction]:
         stmt = select(Transaction).where(Transaction.status == Transaction.Status.PENDING.value)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_balance_pending(self, session: Session) -> int:
         stmt = select(func.sum(Transaction.amount_usd)).where(
-            (Transaction.status == Transaction.Status.PENDING.value) & Transaction.ignore.is_not(True)
+            (col(Transaction.status) == Transaction.Status.PENDING.value) & col(Transaction.ignore).is_not(True)
         )
         return session.exec(stmt).first() or 0
 

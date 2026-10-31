@@ -49,7 +49,7 @@ def test_update_transaction(mocker, amount_eur, expected_actual_amount):
     user = User(id=1, name="alice", super_user=True)
 
     # Act
-    under_test.update_transaction(session=None, user=user, account_id=1, tx=tx, existing_payees={})
+    under_test.update_transaction(session=mocker.Mock(), user=user, account_id=1, tx=tx, existing_payees={})
     
     # Assert
     assert actual_mock.patch_transaction.call_count == 3

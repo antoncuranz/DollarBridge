@@ -22,7 +22,7 @@ class PaymentService:
         self.exchange_service = exchange_service
         self.data_export = data_export
     
-    def get_payments(self, session: Session, user: User, account_id: int, processed: bool | None = None):
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None):
         payments = self.store.get_payments(session, user, account_id, processed)
 
         def map_payment(payment: Payment):
@@ -37,14 +37,16 @@ class PaymentService:
         if payment.status == Payment.Status.PENDING.value:
             try:
                 guessed_transactions = self._guess_transactions_to_process(session, payment)
-                return sum(tx.amount_eur for tx in guessed_transactions)
+                amounts = [tx.amount_eur for tx in guessed_transactions]
+                return None if any(amount is None for amount in amounts) else sum(amount for amount in amounts if amount is not None)
             except Exception as e:
                 print("Unable to calculate amount_eur (probably some tx.amount_eur is missing): " + str(e))
                 return None
 
-        return sum(tx.amount_eur for tx in payment.transactions)
+        amounts = [tx.amount_eur for tx in payment.transactions]
+        return None if any(amount is None for amount in amounts) else sum(amount for amount in amounts if amount is not None)
 
-    def process_payment(self, session: Session, super_user: User, payment_id: int, transaction_ids=None):
+    def process_payment(self, session: Session, super_user: User, payment_id: int, transaction_ids: list[int] | None = None):
         if not super_user.super_user:
             raise HTTPException(status_code=403)
         
@@ -53,10 +55,18 @@ class PaymentService:
             raise HTTPException(status_code=404)
 
         if transaction_ids:
-            transactions = [self.store.get_transaction(session, super_user, tx_id) for tx_id in transaction_ids]
+            transactions = []
+            for tx_id in transaction_ids:
+                transaction = self.store.get_transaction(session, super_user, tx_id)
+                if transaction is None:
+                    raise HTTPException(status_code=404, detail=f"Transaction {tx_id} not found")
+                transactions.append(transaction)
         else:
             transactions = self._guess_transactions_to_process(session, payment)
 
+        assert payment.account.id is not None
+        for tx in transactions:
+            assert tx.id is not None
         actual_payment_id = None
         original_actual_ids = {tx.id: tx.actual_id for tx in transactions}
 
@@ -70,7 +80,7 @@ class PaymentService:
         except Exception:
             created_transaction_actual_ids = {
                 tx.id: tx.actual_id for tx in transactions
-                if original_actual_ids.get(tx.id) is None and tx.actual_id is not None
+                if tx.id is not None and original_actual_ids.get(tx.id) is None and tx.actual_id is not None
             }
             session.rollback()
             self._persist_transaction_actual_ids(session, created_transaction_actual_ids)
@@ -108,6 +118,7 @@ class PaymentService:
         session.commit()
 
         if super_user == payment.account.user:
+            assert payment.account.id is not None
             self.data_export.update_transactions(session, super_user, payment.account.id, transactions)
 
         if payment.actual_id is not None:
@@ -131,6 +142,7 @@ class PaymentService:
         session.commit()
 
     def _guess_transactions_to_process(self, session: Session, payment: Payment):
+        assert payment.account.id is not None
         transactions = self.store.get_posted_transactions_by_account(session, payment.account.id)
 
         process_tx = []
@@ -178,6 +190,7 @@ class PaymentService:
         if payment.amount_usd != tx_remaining_sum:
             raise Exception("Error: Payment amount does not match sum of transactions!")
 
+        assert payment.id is not None
         exchange_payments = self.store.get_exchange_payments_by_payment(session, payment.id)
         amount_eur = self._calc_payment_amount_eur(exchange_payments)
 
@@ -187,21 +200,27 @@ class PaymentService:
             tx.status_enum = Transaction.Status.PAID
             session.add(tx)
 
-        payment.amount_eur = round(amount_eur)
+        payment_amount_eur = round(amount_eur)
+        payment.amount_eur = payment_amount_eur
         payment.status_enum = Payment.Status.PROCESSED
         session.add(payment)
 
-        eur_sum = sum([tx.amount_eur + tx.fees_and_risk_eur for tx in transactions])
-        eur_err = payment.amount_eur - eur_sum
+        eur_sum = 0
+        for tx in transactions:
+            assert tx.amount_eur is not None and tx.fees_and_risk_eur is not None
+            eur_sum += tx.amount_eur + tx.fees_and_risk_eur
+        eur_err = payment_amount_eur - eur_sum
         print("Calculated eur_err of " + str(eur_err)) # TODO: send notification or display in frontend
 
         # apply error to largest transaction
         largest_tx = max(transactions, key=lambda tx: tx.amount_eur or 0)
+        assert largest_tx.fees_and_risk_eur is not None
         largest_tx.fees_and_risk_eur += eur_err
         session.add(largest_tx)
     def _calc_fees_and_risk(self, session: Session, tx: Transaction, payment: Payment, exchange_payments: List[ExchangePayment], payment_amount_eur: Decimal) -> int:
         if tx.amount_eur == 0:
             return 0
+        assert tx.amount_eur is not None
 
         neutral_sum = self._calc_neutral_sum(exchange_payments)
         eur_usd_exchanged = Decimal(payment.amount_usd - neutral_sum) / payment_amount_eur

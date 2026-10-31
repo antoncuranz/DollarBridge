@@ -40,7 +40,7 @@ class Store:
     def get_account(self, session: Session, user: User, account_id: int) -> Optional[Account]:
         return self.account_repository.get_account(session, user, account_id)
 
-    def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: int | None,
+    def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: str | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
                        autopay_offset: int | None, icon: str | None, color: str | None, target_spend: int | None,
                        active: bool = True) -> Account:
@@ -69,7 +69,7 @@ class Store:
     def get_transaction_account_id(self, session: Session, tx_id: int) -> int | None:
         return self.transaction_repository.get_transaction_account_id(session, tx_id)
 
-    def get_transactions(self, session: Session, user: User, account_id: int = None, paid: bool | None = None) -> List[Transaction]:
+    def get_transactions(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None) -> List[Transaction]:
         return self.transaction_repository.get_transactions(session, user, account_id, paid)
 
     def get_paid_transactions_by_payment(self, session: Session, payment_id: int) -> List[Transaction]:
@@ -104,7 +104,7 @@ class Store:
     def get_payment_unsafe(self, session: Session, payment_id: int) -> Optional[Payment]:
         return self.payment_repository.get_payment_unsafe(session, payment_id)
 
-    def get_payments(self, session: Session, user: User, account_id: int, processed: bool | None = None) -> List[Payment]:
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None) -> List[Payment]:
         return self.payment_repository.get_payments(session, user, account_id, processed)
 
     def get_unprocessed_payment(self, session: Session, payment_id: int) -> Optional[Payment]:
@@ -156,7 +156,7 @@ class Store:
     def get_credit(self, session: Session, account_id: int, credit_id: int) -> Optional[Credit]:
         return self.credit_repository.get_credit(session, account_id, credit_id)
 
-    def get_credits(self, session: Session, user: User, account_id: int, usable: bool | None = None) -> List[Credit]:
+    def get_credits(self, session: Session, user: User, account_id: int | None, usable: bool | None = None) -> List[Credit]:
         return self.credit_repository.get_credits(session, user, account_id, usable)
 
     def get_all_credits(self, session: Session) -> List[Credit]:

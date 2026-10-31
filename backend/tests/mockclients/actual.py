@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from data_export.adapter import openapi
 from data_export.adapter.actual_client import IActualClient
@@ -6,12 +6,12 @@ from models import config, Account, Transaction, User
 
 
 class MockActualClient(IActualClient):
-    fail_on_transaction_create_call = None
-    fail_on_patch_call = None
+    fail_on_transaction_create_call: int | None = None
+    fail_on_patch_call: int | None = None
     fail_on_payment_create = False
-    patch_calls = []
-    created_transactions = []
-    deleted_transactions = []
+    patch_calls: list[tuple[str | None, Any]] = []
+    created_transactions: list[openapi.Transaction] = []
+    deleted_transactions: list[str] = []
 
     @classmethod
     def reset(cls):

@@ -28,6 +28,7 @@ class AbstractImporter(ABC):
         pass
 
     def _process_payment(self, session: Session, account: Account, tx) -> Payment:
+        assert account.id is not None
         args = self._make_transaction_args(tx, account.id)
         
         pending_payment = self.repository.get_pending_payment(session, account.id, args["date"], args["amount_usd"])

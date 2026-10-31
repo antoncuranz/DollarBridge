@@ -58,6 +58,7 @@ class PlaidService:
         connection = self.repository.create_plaid_connection(session, user, exchange_response.item_id, exchange_response.access_token)
         session.commit()
         
+        assert connection.id is not None
         self.discover_accounts(session, user, connection.id)
         return exchange_response.to_dict()
     
@@ -152,4 +153,5 @@ class PlaidService:
             raise ValueError("Plaid last_successful_update has no UTC offset")
 
         plaid_account.last_successful_update = last_update.astimezone(timezone.utc)
+        assert plaid_account.id is not None
         self._get_gauge(plaid_account.id).set(plaid_account.last_successful_update.timestamp())

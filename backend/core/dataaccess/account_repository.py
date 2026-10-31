@@ -1,18 +1,18 @@
 from typing import List, Optional
 
-from sqlmodel import Session, select, true
+from sqlmodel import Session, col, select, true
 
 from models import Account, BankAccount, User
 
 
 class AccountRepository:
     def get_all_accounts(self, session: Session) -> List[Account]:
-        stmt = select(Account).order_by(Account.id)
-        return session.exec(stmt).all()
+        stmt = select(Account).order_by(col(Account.id))
+        return list(session.exec(stmt).all())
     
     def get_accounts_of_user(self, session: Session, user: User) -> List[Account]:
-        stmt = select(Account).where(Account.user_id == user.id).order_by(Account.id)
-        return session.exec(stmt).all()
+        stmt = select(Account).where(Account.user_id == user.id).order_by(col(Account.id))
+        return list(session.exec(stmt).all())
     
     def get_account(self, session: Session, user: User, account_id: int) -> Optional[Account]:
         query = (Account.user_id == user.id) if not user.super_user else true()
@@ -20,7 +20,7 @@ class AccountRepository:
         stmt = select(Account).where(query & (Account.id == account_id))
         return session.exec(stmt).first()
 
-    def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: int | None,
+    def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: str | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
                        autopay_offset: int | None, icon: str | None, color: str | None,
                        target_spend: int | None, active: bool = True) -> Account:
@@ -32,12 +32,12 @@ class AccountRepository:
         return account
 
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
-        stmt = select(BankAccount).order_by(BankAccount.id)
-        return session.exec(stmt).all()
+        stmt = select(BankAccount).order_by(col(BankAccount.id))
+        return list(session.exec(stmt).all())
     
     def get_bank_accounts_of_user(self, session: Session, user: User) -> List[BankAccount]:
-        stmt = select(BankAccount).where(BankAccount.user_id == user.id).order_by(BankAccount.id)
-        return session.exec(stmt).all()
+        stmt = select(BankAccount).where(BankAccount.user_id == user.id).order_by(col(BankAccount.id))
+        return list(session.exec(stmt).all())
     
     def get_bank_account(self, session: Session, user: User, bank_account_id: int) -> Optional[BankAccount]:
         query = (BankAccount.user_id == user.id) if not user.super_user else true()

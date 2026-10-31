@@ -18,6 +18,6 @@ class ExchangeRateFacade:
     def guess_amount_eur(self, session: Session, transaction: Transaction) -> int | None:
         return self.exchangerate_service.guess_amount_eur(session, transaction)
 
-    def get_exchange_rate(self, session: Session, date: datetime.date) -> Decimal:
+    def get_exchange_rate(self, session: Session, date: datetime.date) -> Decimal | None:
         return self.exchangerate_service.get_exchange_rate(session, date)
 

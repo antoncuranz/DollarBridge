@@ -33,23 +33,23 @@ class ExchangeService:
 
     def create_exchange(self, session: Session, exchange: CreateExchange) -> Exchange:
         if exchange.paid_eur == 0:  # neutral Exchange => won't affect avg. exchange rate of Payment
-            exchange = self.store.create_exchange(
+            created_exchange = self.store.create_exchange(
                 session, date=exchange.date, amount_usd=exchange.amount_usd, exchange_rate=Decimal(0),
                 amount_eur=0, paid_eur=0, fees_eur=0
             )
             session.commit()
-            return exchange
+            return created_exchange
 
         exchange_rate = Decimal(exchange.exchange_rate) / 10000000
         amount_eur = round(Decimal(exchange.amount_usd) / exchange_rate)
         fees_eur = exchange.paid_eur - amount_eur
 
-        exchange = self.store.create_exchange(
+        created_exchange = self.store.create_exchange(
             session, date=exchange.date, amount_usd=exchange.amount_usd, exchange_rate=exchange_rate,
             amount_eur=amount_eur, paid_eur=exchange.paid_eur, fees_eur=fees_eur
         )
         session.commit()
-        return exchange
+        return created_exchange
     
     def delete_exchange(self, session: Session, exchange_id: int):
         exchange = self.store.get_exchange(session, exchange_id)

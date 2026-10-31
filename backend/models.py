@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import List
 
-from sqlalchemy import DateTime
+from sqlalchemy import Column, DateTime
 from sqlmodel import create_engine, Session, SQLModel, Relationship, Field
 
 from config import config
@@ -35,7 +35,7 @@ class PlaidAccount(SQLModel, table=True):
     connection_id: int = Field(foreign_key="plaidconnection.id")
     connection: "PlaidConnection" = Relationship(back_populates="plaid_accounts")
     cursor: str | None = None
-    last_successful_update: datetime.datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
+    last_successful_update: datetime.datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True)))
 
 
 class PlaidConnection(SQLModel, table=True):
@@ -87,7 +87,7 @@ class PaymentBase(SQLModel):
     account_id: int = Field(foreign_key="account.id")
     import_id: str | None = Field(unique=True)
     actual_id: str | None
-    date: datetime.date = datetime.date.today
+    date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
     category: str | None
@@ -123,7 +123,7 @@ class PaymentWithAmounts(PaymentBase):
 
 class Exchange(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    date: datetime.date = datetime.date.today
+    date: datetime.date = Field(default_factory=datetime.date.today)
     amount_usd: int
     exchange_rate: Decimal = Field(decimal_places=8)
     amount_eur: int
@@ -149,7 +149,7 @@ class TransactionBase(SQLModel):
     payment_id: int | None = Field(foreign_key="payment.id")
     import_id: str = Field(unique=True)
     actual_id: str | None
-    date: datetime.date = datetime.date.today
+    date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
     category: str | None
@@ -194,7 +194,7 @@ class Credit(SQLModel, table=True):
     account_id: int = Field(foreign_key="account.id")
     account: Account = Relationship()
     import_id: str = Field(unique=True)
-    date: datetime.date = datetime.date.today
+    date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
     category: str | None

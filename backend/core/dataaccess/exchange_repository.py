@@ -2,14 +2,15 @@ import datetime
 from decimal import Decimal
 from typing import Dict, List, Optional
 
-from sqlmodel import Session, select, func
+from sqlalchemy.sql.elements import ColumnElement
+from sqlmodel import Session, col, select, func, true
 
 from models import Payment, ExchangePayment, Exchange, Transaction
 
 
 class ExchangeRepository:
     def get_exchanges(self, session: Session, usable=None) -> List[Exchange]:
-        query = True
+        query: ColumnElement[bool] = true()
         if usable is True:
             amount_used = (
                 select(func.sum(ExchangePayment.amount)).join(Payment)
@@ -17,10 +18,10 @@ class ExchangeRepository:
                     (ExchangePayment.exchange_id == Exchange.id) & (Payment.status == Payment.Status.PROCESSED.value)
                 ).scalar_subquery()
             )
-            query = Exchange.amount_usd > func.coalesce(amount_used, 0)
+            query = col(Exchange.amount_usd) > func.coalesce(amount_used, 0)
 
-        stmt = select(Exchange).where(query).order_by(Exchange.date.desc())
-        return session.exec(stmt).all()
+        stmt = select(Exchange).where(query).order_by(col(Exchange.date).desc())
+        return list(session.exec(stmt).all())
 
     def get_exchange(self, session: Session, exchange_id: int) -> Optional[Exchange]:
         stmt = select(Exchange).where(Exchange.id == exchange_id)
@@ -44,17 +45,21 @@ class ExchangeRepository:
         if not transaction_ids:
             return {}
         stmt = select(Exchange.cashback_transaction_id, Exchange.id).where(
-            Exchange.cashback_transaction_id.in_(transaction_ids)
+            col(Exchange.cashback_transaction_id).in_(transaction_ids)
         )
-        return {transaction_id: exchange_id for transaction_id, exchange_id in session.exec(stmt).all()}
+        return {
+            transaction_id: exchange_id
+            for transaction_id, exchange_id in session.exec(stmt).all()
+            if transaction_id is not None and exchange_id is not None
+        }
 
     def get_cashback_transaction_descriptions(self, session: Session, exchange_ids: List[int]) -> Dict[int, str]:
         if not exchange_ids:
             return {}
         stmt = select(Exchange.id, Transaction.description).join(
-            Transaction, Transaction.id == Exchange.cashback_transaction_id
-        ).where(Exchange.id.in_(exchange_ids))
-        return {exchange_id: description for exchange_id, description in session.exec(stmt).all()}
+            Transaction, col(Transaction.id) == col(Exchange.cashback_transaction_id)
+        ).where(col(Exchange.id).in_(exchange_ids))
+        return {exchange_id: description for exchange_id, description in session.exec(stmt).all() if exchange_id is not None}
 
     #### EXCHANGE PAYMENTS ####
     
@@ -66,11 +71,11 @@ class ExchangeRepository:
 
     def get_exchange_payments_by_exchange(self, session: Session, exchange_id: int) -> List[ExchangePayment]:
         stmt = select(ExchangePayment).where(ExchangePayment.exchange_id == exchange_id)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_exchange_payments_by_payment(self, session: Session, payment_id: int) -> List[ExchangePayment]:
         stmt = select(ExchangePayment).where(ExchangePayment.payment_id == payment_id)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_exchange_payment_amount(self, session: Session, exchange_id: int, payment_id: int) -> int:
         ep = self.get_exchange_payment(session, exchange_id, payment_id)
@@ -89,6 +94,7 @@ class ExchangeRepository:
         
         if created:
             model = ExchangePayment(exchange_id=exchange_id, payment_id=payment_id, amount=amount)
+        assert model is not None
         session.add(model)
         
         return model, created

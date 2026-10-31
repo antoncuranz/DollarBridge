@@ -11,13 +11,15 @@ class CreditService:
         self.store = store
         self.balance_service = balance_service
 
-    def get_credits(self, session: Session, user: User, account_id: int, usable: bool | None = None):
+    def get_credits(self, session: Session, user: User, account_id: int | None, usable: bool | None = None):
         return self.store.get_credits(session, user, account_id, usable)
 
     def update_credit(self, session: Session, user: User, credit_id: int, transaction_id: int, amount: int):
         tx = self.store.get_transaction(session, user, transaction_id)
+        if tx is None:
+            raise HTTPException(status_code=404)
         credit = self.store.get_credit(session, tx.account_id, credit_id)
-        if not tx or not credit:
+        if not credit:
             raise HTTPException(status_code=404)
         if tx.status == Transaction.Status.PAID.value:
             raise HTTPException(status_code=400, detail="Transaction already paid")

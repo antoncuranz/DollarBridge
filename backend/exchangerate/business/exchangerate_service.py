@@ -20,12 +20,15 @@ class ExchangeRateService:
         self.repository = repository
         
     def fetch_exchange_rates(self, session: Session, account: Account, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD):
+        assert account.id is not None
         transactions = self.repository.get_transactions_without_eur_amount(session, account.id)
         [self.get_exchange_rate(session, date, source) for date in set([tx.date for tx in transactions])]
 
     def guess_amount_eur(self, session: Session, transaction: Transaction) -> int | None:
         try:
             exchange_rate = self.get_exchange_rate(session, transaction.date)
+            if exchange_rate is None:
+                return None
             return int(transaction.amount_usd / exchange_rate)
         except Exception:
             return None
@@ -41,7 +44,7 @@ class ExchangeRateService:
                 raise Exception("Not implemented")
             
             if rate:
-                self.repository.persist_exchange_rate(session, date, source.value, rate)
+                self.repository.persist_exchange_rate(session, date, source, rate)
                 session.commit()
             return rate
         else:
