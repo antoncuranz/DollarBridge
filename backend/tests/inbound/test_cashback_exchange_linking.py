@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
 
@@ -12,8 +14,8 @@ def test_cashback_exchange_can_be_linked_and_unlinked_from_payment(
     sqlite_session: Session, sqlite_client: TestClient
 ):
     sqlite_session.add_all([User(**ALICE_USER), BankAccount(**BANK_ACCOUNT_1), Account(**ACCOUNT_1)])
-    transaction = Transaction(**TX_1)
-    payment = Payment(**(PAYMENT_1 | {"amount_usd": transaction.amount_usd}))
+    transaction = Transaction(**(TX_1 | {"date": date.fromisoformat(TX_1["date"])}))
+    payment = Payment(**(PAYMENT_1 | {"date": date.fromisoformat(PAYMENT_1["date"]), "amount_usd": transaction.amount_usd}))
     sqlite_session.add_all([transaction, payment])
     sqlite_session.commit()
 
@@ -53,12 +55,12 @@ def test_cashback_exchange_requires_same_account_and_a_single_full_assignment(
         User(**ALICE_USER), BankAccount(**BANK_ACCOUNT_1),
         Account(**ACCOUNT_1), Account(**ACCOUNT_2),
     ])
-    transaction = Transaction(**TX_1)
-    payment = Payment(**(PAYMENT_1 | {"amount_usd": transaction.amount_usd}))
+    transaction = Transaction(**(TX_1 | {"date": date.fromisoformat(TX_1["date"])}))
+    payment = Payment(**(PAYMENT_1 | {"date": date.fromisoformat(PAYMENT_1["date"]), "amount_usd": transaction.amount_usd}))
     other_account_payment = Payment(**(PAYMENT_2 | {
-        "account_id": ACCOUNT_2["id"], "amount_usd": transaction.amount_usd,
+        "account_id": ACCOUNT_2["id"], "date": date.fromisoformat(PAYMENT_2["date"]), "amount_usd": transaction.amount_usd,
     }))
-    second_payment = Payment(**(PAYMENT_3 | {"amount_usd": transaction.amount_usd}))
+    second_payment = Payment(**(PAYMENT_3 | {"date": date.fromisoformat(PAYMENT_3["date"]), "amount_usd": transaction.amount_usd}))
     sqlite_session.add_all([transaction, payment, other_account_payment, second_payment])
     sqlite_session.commit()
 

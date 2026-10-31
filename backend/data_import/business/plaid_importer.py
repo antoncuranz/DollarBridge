@@ -1,4 +1,3 @@
-import json
 import traceback
 from decimal import Decimal
 from typing import Annotated
@@ -43,7 +42,7 @@ class PlaidImporter(AbstractImporter):
                         self._process_payment(session, account, tx)
                     else:
                         self._process_credit(session, account, tx)
-            except:
+            except Exception:
                 print("Error processing plaid transaction: " + self._print_tx(tx))
                 traceback.print_exc()
         

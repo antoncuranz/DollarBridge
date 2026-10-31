@@ -256,8 +256,8 @@ def test_payment_processing_with_multiple_exchanges_real_case_2(session: Session
 
 
 def test_unprocess_payment_success(session: Session, client: TestClient):
-    session.add(Transaction(**TX_1, payment_id=1, status=Transaction.Status.PAID.value, fees_and_risk_eur=5))
-    session.add(Payment(**PAYMENT_1, amount_eur=1000, status=Payment.Status.PROCESSED.value))
+    session.add(Transaction(**(TX_1 | {"payment_id": 1, "status": Transaction.Status.PAID.value, "fees_and_risk_eur": 5})))
+    session.add(Payment(**(PAYMENT_1 | {"amount_eur": 1000, "status": Payment.Status.PROCESSED.value})))
     session.commit()
 
     response = client.post("/api/payments/1/unprocess", headers=ALICE_AUTH)
@@ -283,7 +283,7 @@ def test_unprocess_payment_rejects_posted_payment(session: Session, client: Test
 
 
 def test_delete_pending_payment_success(session: Session, client: TestClient):
-    session.add(Payment(**PAYMENT_1, status=Payment.Status.PENDING.value))
+    session.add(Payment(**(PAYMENT_1 | {"status": Payment.Status.PENDING.value})))
     session.commit()
 
     response = client.delete("/api/payments/1", headers=ALICE_AUTH)
@@ -293,7 +293,7 @@ def test_delete_pending_payment_success(session: Session, client: TestClient):
 
 
 def test_delete_pending_payment_rejects_processed_payment(session: Session, client: TestClient):
-    session.add(Payment(**PAYMENT_1, amount_eur=1000, status=Payment.Status.PROCESSED.value))
+    session.add(Payment(**(PAYMENT_1 | {"amount_eur": 1000, "status": Payment.Status.PROCESSED.value})))
     session.commit()
 
     response = client.delete("/api/payments/1", headers=ALICE_AUTH)

@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException
 from sqlmodel import Session
 from core.business.balance_service import BalanceService
 from core.dataaccess.store import Store
-from models import Transaction, User, engine
+from models import Transaction, User
 
 
 class CreditService:

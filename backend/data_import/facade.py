@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Annotated, Optional
+from typing import Annotated, Optional
 
 from fastapi import Depends
 from sqlmodel import Session

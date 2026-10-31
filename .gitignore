@@ -10983,3 +10983,8 @@
 /venv/lib/python3.12/site-packages/six.py
 /venv/lib/python3.12/site-packages/typing_extensions.py
 /venv/pyvenv.cfg
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

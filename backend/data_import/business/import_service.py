@@ -58,6 +58,8 @@ class ImportService:
             statement_date = self.dates.get_statement_date_for_due_date(account, due_date)
             pending_payment = self.repository.get_pending_payment(session, account.id, due_date)
             last_successful_update = account.plaid_account.last_successful_update
+            if last_successful_update is not None and last_successful_update.tzinfo is None:
+                last_successful_update = last_successful_update.replace(tzinfo=timezone.utc)
 
             cutoff = datetime.combine(statement_date + timedelta(days=1), time.min, tzinfo=timezone.utc)
             if pending_payment is None and last_successful_update is not None and last_successful_update > cutoff and today < due_date:

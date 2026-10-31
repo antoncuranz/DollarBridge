@@ -1,4 +1,3 @@
-import json
 import traceback
 from datetime import datetime
 from decimal import Decimal
@@ -41,7 +40,7 @@ class QuilttImporter(AbstractImporter):
                         self._process_credit(session, account, tx)
                 else:
                     self._process_transaction(session, account, tx)
-            except:
+            except Exception:
                 print("Error processing quiltt_tx: " + self._print_tx(tx))
                 traceback.print_exc()
 
