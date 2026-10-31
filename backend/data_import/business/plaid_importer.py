@@ -18,12 +18,16 @@ class PlaidImporter(AbstractImporter):
         self.plaid_service = plaid_service
 
     def update_bank_account_balance(self, session: Session, bank_account: BankAccount):
+        if bank_account.plaid_account is None:
+            raise ValueError("Bank account is not linked to Plaid")
         balance = self.plaid_service.get_account_balance(bank_account.plaid_account)
         bank_account.balance = balance
         session.add(bank_account)
     
     def import_transactions(self, session: Session, account: Account):
         plaid_account = account.plaid_account
+        if plaid_account is None:
+            raise ValueError("Account is not linked to Plaid")
         added, _, removed, next_cursor = self.plaid_service.sync_transactions(plaid_account)
 
         for tx in sorted(added, key=lambda tx: tx["date"]):

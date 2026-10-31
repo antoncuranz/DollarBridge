@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+from typing import Any
 
 from models import ExchangeRate
 
@@ -81,27 +82,27 @@ QUILTT_TRANSACTIONS = [
     QUILTT_TX_1, QUILTT_TX_2, QUILTT_TX_3, QUILTT_TX_5
 ]
 
-TX_1 = dict(
+TX_1: dict[str, Any] = dict(
     id=1, account_id=1, import_id="import_test_tx_1", date="2024-01-01", counterparty="counterparty1", payment_id=None, actual_id=None,
     description="description1", category="category", amount_usd=1109, amount_eur=1000, status=2, fees_and_risk_eur=None
 )
-TX_2 = dict(
+TX_2: dict[str, Any] = dict(
     id=2, account_id=1, import_id="import_test_tx_2", date="2024-01-02", counterparty="counterparty2", payment_id=None, actual_id=None,
     description="description2", category="category", amount_usd=552, amount_eur=500, status=2, fees_and_risk_eur=None
 )
-TX_3 = dict(
+TX_3: dict[str, Any] = dict(
     id=3, account_id=1, import_id="import_test_tx_3", date="2024-01-03", counterparty="counterparty3", payment_id=None, actual_id=None,
     description="description3", category="category", amount_usd=2193, amount_eur=2000, status=2, fees_and_risk_eur=None
 )
-TX_4 = dict(
+TX_4: dict[str, Any] = dict(
     id=4, account_id=2, import_id="import_test_tx_4", date="2024-01-04", counterparty="counterparty4", payment_id=None, actual_id=None,
     description="description4", category="category", amount_usd=2193, amount_eur=2000, status=2, fees_and_risk_eur=None
 )
-TX_5 = dict(
+TX_5: dict[str, Any] = dict(
     id=5, account_id=1, import_id="import_test_tx_5", date="2024-01-05", counterparty="counterparty5", payment_id=None, actual_id=None,
     description="description5", category="category", amount_usd=2193, amount_eur=2000, status=1, fees_and_risk_eur=None
 )
-TX_6 = dict(
+TX_6: dict[str, Any] = dict(
     id=6, account_id=1, import_id="import_test_tx_6", date="2024-01-06", counterparty="counterparty6", payment_id=None, actual_id=None,
     description="description6", category="category", amount_usd=2193, amount_eur=2000, status=3, fees_and_risk_eur=7
 )
@@ -119,30 +120,30 @@ CREDIT_2 = dict(
     category="generic", amount_usd=109
 )
 
-PAYMENT_1 = dict(
+PAYMENT_1: dict[str, Any] = dict(
     id=1, account_id=1, import_id="import_test_pm_1", date="2024-01-30", counterparty="Capital One", description="Payment",
     category="generic", amount_usd=sum([tx["amount_usd"] for tx in TRANSACTIONS]), status=2
 )
-PAYMENT_2 = dict(
+PAYMENT_2: dict[str, Any] = dict(
     id=2, account_id=1, import_id="import_test_pm_2", date="2024-01-30", counterparty="Capital One", description="Payment",
     category="generic", amount_usd=100, status=2
 )
-PAYMENT_3 = dict(
+PAYMENT_3: dict[str, Any] = dict(
     id=3, account_id=1, import_id="import_test_pm_3", date="2024-01-30", counterparty="Capital One", description="Payment",
     category="generic", amount_usd=50000, status=2
 )
 
-EXCHANGE_1_JSON = dict(
+EXCHANGE_1_JSON: dict[str, Any] = dict(
     date="2024-01-29", amount_usd=PAYMENT_1["amount_usd"], paid_eur=-1, exchange_rate=10851990
 )
 
-EXCHANGE_1 = dict(
+EXCHANGE_1: dict[str, Any] = dict(
     id=1, date="2024-01-29", amount_usd=PAYMENT_1["amount_usd"], paid_eur=-1, exchange_rate=Decimal(1.085199)
 )
-EXCHANGE_2 = dict(
+EXCHANGE_2: dict[str, Any] = dict(
     id=2, date="2024-01-20", amount_usd=1000, paid_eur=-1, exchange_rate=Decimal(1.0894991)
 )
-EXCHANGE_3 = dict(
+EXCHANGE_3: dict[str, Any] = dict(
     id=3, date="2024-01-29", amount_usd=5000, paid_eur=-1, exchange_rate=Decimal(1.085199)
 )
 for exchange in [EXCHANGE_1, EXCHANGE_2, EXCHANGE_3]:

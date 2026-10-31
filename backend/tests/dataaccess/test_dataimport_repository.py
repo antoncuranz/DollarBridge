@@ -22,6 +22,7 @@ def test_get_account(session: Session):
 
     # Act
     account = under_test.get_account(session, user, account_id)
+    assert account is not None
 
     # Assert
     assert account.id == account_id

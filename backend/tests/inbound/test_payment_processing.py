@@ -3,7 +3,7 @@ import datetime
 from models import *
 from tests.fixtures import *
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, col, select, func
 from fastapi.testclient import TestClient
 import pytest
 
@@ -264,6 +264,7 @@ def test_unprocess_payment_success(session: Session, client: TestClient):
 
     payment = session.get(Payment, 1)
     tx = session.get(Transaction, 1)
+    assert payment is not None and tx is not None
 
     assert response.status_code == 204
     assert payment.status_enum == Payment.Status.POSTED
@@ -429,7 +430,7 @@ def _set_transaction_actual_ids(session: Session, transaction_ids):
 def _assert_payment_not_processed(engine, payment_id: int, transaction_ids):
     with Session(engine) as session:
         payment = session.exec(select(Payment).where(Payment.id == payment_id)).one()
-        transactions = session.exec(select(Transaction).where(Transaction.id.in_(transaction_ids))).all()
+        transactions = session.exec(select(Transaction).where(col(Transaction.id).in_(transaction_ids))).all()
 
         assert payment.status_enum == Payment.Status.POSTED
         assert payment.amount_eur is None
@@ -448,9 +449,11 @@ def _assert_transaction_actual_ids(engine, transaction_actual_ids):
             assert tx.actual_id == actual_id
 
 
-def _get_sum_eur_usd_and_payment(session: Session, payment_id: int):
+def _get_sum_eur_usd_and_payment(session: Session, payment_id: int | None):
+    if payment_id is None:
+        raise ValueError("Payment has no persisted ID")
     sum_eur = session.exec(
-        select(func.sum(Transaction.amount_eur + Transaction.fees_and_risk_eur))
+        select(func.sum(col(Transaction.amount_eur) + col(Transaction.fees_and_risk_eur)))
         .where(Transaction.payment_id == payment_id)
     ).one()
     sum_usd = session.exec(select(func.sum(Transaction.amount_usd)).where(Transaction.payment_id == payment_id)).one()

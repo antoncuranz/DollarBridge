@@ -28,10 +28,14 @@ class DateService:
         return result
 
     def get_statement_date(self, account: Account, selected_month: datetime.date) -> datetime.date:
+        if account.due_day is None:
+            raise ValueError("Account has no due day")
         correct_month = self._get_correct_month(account.due_day, 25, selected_month)
         return correct_month.replace(day=account.due_day) - datetime.timedelta(days=25)
 
     def get_due_date(self, account: Account, selected_month: datetime.date) -> datetime.date:
+        if account.due_day is None:
+            raise ValueError("Account has no due day")
         offset = account.autopay_offset if account.autopay_offset else 0
         correct_month = self._get_correct_month(account.due_day, offset, selected_month)
         return correct_month.replace(day=account.due_day) - datetime.timedelta(days=offset)

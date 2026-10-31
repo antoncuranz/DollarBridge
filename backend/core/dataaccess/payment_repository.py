@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from sqlmodel import Session, select, func, true
+from sqlmodel import Session, col, select, func, true
 
 from models import User, Account, Payment
 
@@ -10,8 +10,8 @@ class PaymentRepository:
         stmt = select(Payment).where(Payment.id == payment_id)
         return session.exec(stmt).first()
 
-    def get_payments(self, session: Session, user: User, account_id: int, processed: bool | None = None):
-        query = (Account.user_id == user.id) if not user.super_user else true()
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None):
+        query = (col(Account.user_id) == user.id) if not user.super_user else true()
 
         if processed is not None:
             query = query & (
@@ -20,8 +20,8 @@ class PaymentRepository:
         if account_id is not None:
             query = query & (Payment.account_id == account_id)
 
-        stmt = select(Payment).join(Account).where(query).order_by(Payment.date.desc())
-        return session.exec(stmt).all()
+        stmt = select(Payment).join(Account).where(query).order_by(col(Payment.date).desc())
+        return list(session.exec(stmt).all())
 
     def get_unprocessed_payment(self, session: Session, payment_id: int) -> Optional[Payment]:
         stmt = select(Payment).where(
@@ -38,4 +38,4 @@ class PaymentRepository:
 
     def get_all_posted_payments(self, session: Session) -> List[Payment]:
         stmt = select(Payment).where(Payment.status == Payment.Status.POSTED.value)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())

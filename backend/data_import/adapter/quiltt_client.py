@@ -28,7 +28,7 @@ class IQuilttClient:
 
 class QuilttClient(IQuilttClient):
     def __init__(self):
-        self.auth_headers = {}
+        self.auth_headers: dict[str, str] = {}
         transport = AIOHTTPTransport(url="https://api.quiltt.io/v1/graphql", headers=self.auth_headers)
         self.client = Client(transport=transport, fetch_schema_from_transport=True)
 

@@ -36,7 +36,7 @@ def get_exchanges(session: Annotated[Session, Depends(get_session)],
     descriptions = exchange_service.get_cashback_transaction_descriptions(session, exchanges)
     return [
         ExchangeTO.model_validate(exchange, update={
-            "cashback_transaction_description": descriptions.get(exchange.id),
+            "cashback_transaction_description": descriptions.get(exchange.id) if exchange.id is not None else None,
         })
         for exchange in exchanges
     ]

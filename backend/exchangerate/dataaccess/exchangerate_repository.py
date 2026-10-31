@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 from typing import Optional, List
 
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from models import ExchangeRate, Transaction
 
@@ -13,10 +13,10 @@ class ExchangeRateRepository:
         return session.exec(stmt).first()
     
     def persist_exchange_rate(self, session: Session, date: datetime.date, source: ExchangeRate.Source, rate: Decimal) -> ExchangeRate:
-        exchange_rate = ExchangeRate(date=date, source=source, exchange_rate=rate)
+        exchange_rate = ExchangeRate(date=date, source=source.value, exchange_rate=rate)
         session.add(exchange_rate)
         return exchange_rate
 
     def get_transactions_without_eur_amount(self, session: Session, account_id: int) -> List[Transaction]:
-        stmt = select(Transaction).where((Transaction.account_id == account_id) & (Transaction.amount_eur.is_(None)))
-        return session.exec(stmt).all()
+        stmt = select(Transaction).where((col(Transaction.account_id) == account_id) & col(Transaction.amount_eur).is_(None))
+        return list(session.exec(stmt).all())

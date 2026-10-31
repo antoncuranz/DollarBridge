@@ -45,6 +45,9 @@ select = ["E4", "E7", "E9", "F"]
 
 [tool.mypy]
 python_version = "3.12"
+check_untyped_defs = true
+
+# These third-party packages do not publish type information.
+[[tool.mypy.overrides]]
+module = ["plaid", "plaid.*", "testcontainers.postgres"]
 ignore_missing_imports = true
-check_untyped_defs = false
-follow_imports = "silent"

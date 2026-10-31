@@ -13,6 +13,7 @@ from data_import.dataaccess.dataimport_repository import DataImportRepository
 from dates.facade import DatesFacade
 from exchangerate.facade import ExchangeRateFacade
 from models import Account, User, BankAccount
+from persistence import require_persisted_id
 
 
 class ImportService:
@@ -56,7 +57,8 @@ class ImportService:
             due_date = self.dates.get_next_due_date(account)
             last_statement_date = self.dates.get_statement_date_for_due_date(account, self.dates.get_last_due_date(account))
             statement_date = self.dates.get_statement_date_for_due_date(account, due_date)
-            pending_payment = self.repository.get_pending_payment(session, account.id, due_date)
+            account_id = require_persisted_id(account.id, "Account")
+            pending_payment = self.repository.get_pending_payment(session, account_id, due_date)
             last_successful_update = account.plaid_account.last_successful_update
             if last_successful_update is not None and last_successful_update.tzinfo is None:
                 last_successful_update = last_successful_update.replace(tzinfo=timezone.utc)
@@ -93,15 +95,17 @@ class ImportService:
             # Exchange posted. Please transfer X to bank account A and Y to bank account B
 
     def _import_account_transactions(self, session: Session, account: Account):
+        account_id = require_persisted_id(account.id, "Account")
         self.importer.import_transactions(session, account)
         self.exchangerate.fetch_exchange_rates(session, account)
         if account.actual_id is not None:
-            self.data_export.export_transactions(session, account.user, account.id)
+            self.data_export.export_transactions(session, account.user, account_id)
 
     def _get_pending_payments_in_days(self, session: Session, bank_account: BankAccount, days: int):
+        bank_account_id = require_persisted_id(bank_account.id, "BankAccount")
         today = date.today()
         end = today + timedelta(days=days)
-        return self.repository.get_pending_payments_between(session, bank_account.id, today, end)
+        return self.repository.get_pending_payments_between(session, bank_account_id, today, end)
 
     def _send_notification(self, msg: str, priority=0):
         requests.post("https://api.pushover.net/1/messages.json", data = {

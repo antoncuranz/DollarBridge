@@ -110,8 +110,12 @@ def sqlite_client_fixture(sqlite_session: Session):
 
 
 @pytest.fixture()
-def balance_service():
-    return BalanceService(Store(AccountRepository(), TransactionRepository(), CreditRepository(), PaymentRepository(), ExchangeRepository()), None, None)
+def balance_service(mocker):
+    return BalanceService(
+        Store(AccountRepository(), TransactionRepository(), CreditRepository(), PaymentRepository(), ExchangeRepository()),
+        mocker.Mock(),
+        mocker.Mock(),
+    )
 
 
 @pytest.fixture(autouse=True)

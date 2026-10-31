@@ -37,8 +37,8 @@ def test_import_transactions(mocker, session: Session):
         _create_plaid_tx(account_id="plaid-account-1", amount=12.34, date=datetime.date(2025, 1, 1), pending=False, transaction_id="plaid-tx-1")
         # create_plaid_tx(account_id="plaid-account-2", amount=12.34, date=datetime.date(2025, 1, 2), pending=False, transaction_id="plaid-tx-4")
     ]
-    modified = []
-    removed = [
+    modified: list[dict] = []
+    removed: list[dict] = [
         # RemovedTransaction()
     ]
     next_cursor = "cursor-1000"

@@ -45,11 +45,11 @@ def process_payment(user: Annotated[User, Depends(get_current_user)],
                     payment_service: Annotated[PaymentService, Depends()],
                     payment_id: int, transactions: str | None = None):
     try:
-        transactions = None if not transactions else [int(n) for n in transactions.split(",")]
+        transaction_ids = None if not transactions else [int(n) for n in transactions.split(",")]
     except (ValueError, TypeError):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
-    payment_service.process_payment(session, user, payment_id, transactions)
+    payment_service.process_payment(session, user, payment_id, transaction_ids)
 
 
 @router.post("/{payment_id}/unprocess", status_code=status.HTTP_204_NO_CONTENT)

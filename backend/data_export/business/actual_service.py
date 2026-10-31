@@ -11,6 +11,7 @@ from data_export.adapter.actual_client import IActualClient, ActualClient
 from data_export.dataaccess.dataexport_repository import DataExportRepository
 from exchangerate.facade import ExchangeRateFacade
 from models import Transaction, Payment, User, Account
+from persistence import require_persisted_id
 
 
 class ActualService:
@@ -96,7 +97,8 @@ class ActualService:
         if account.user.super_user:
             self.actual.create_transaction(account, self._create_actual_payment(payment, id))
         else:
-            transactions = self.repository.get_paid_transactions_by_payment(session, payment.id)
+            payment_id = require_persisted_id(payment.id, "Payment")
+            transactions = self.repository.get_paid_transactions_by_payment(session, payment_id)
             self.actual.create_transaction_super_misc(super_user, self._create_actual_payment_misc(payment, transactions, id))
 
         payment.actual_id = id
@@ -120,7 +122,7 @@ class ActualService:
         else:
             return actual_tx.payee
 
-    def _create_actual_transaction_super_user(self, tx: Transaction, id: str, category: str,
+    def _create_actual_transaction_super_user(self, tx: Transaction, id: str, category: str | None,
                                               amount_eur: int) -> openapi.Transaction:
         return openapi.Transaction(
             id=id,
@@ -146,7 +148,7 @@ class ActualService:
             ]
         )
 
-    def _create_actual_transaction_regular(self, tx: Transaction, id: str, category: str,
+    def _create_actual_transaction_regular(self, tx: Transaction, id: str, category: str | None,
                                            amount_eur: int) -> openapi.Transaction:
         return openapi.Transaction(
             id=id,
@@ -173,8 +175,10 @@ class ActualService:
         )
     
     def _create_actual_payment_misc(self, payment: Payment, transactions: List[Transaction], id: str) -> openapi.Transaction:
-        tx_eur_sum = sum([tx.amount_eur for tx in transactions])
-        fees = tx_eur_sum - payment.amount_eur 
+        if payment.amount_eur is None or any(tx.amount_eur is None for tx in transactions):
+            raise ValueError("Processed payment and transactions must have EUR amounts")
+        tx_eur_sum = sum(tx.amount_eur for tx in transactions if tx.amount_eur is not None)
+        fees = tx_eur_sum - payment.amount_eur
         payee = "{}'s {}".format(payment.account.user.name.title(), payment.account.name)
         notes = "({}) {}".format(payee, payment.description)
 
@@ -202,8 +206,11 @@ class ActualService:
 
     def _update_transaction_super_user(self, account: Account, tx: Transaction, actual_tx: openapi.Transaction,
                                        payee: str, amount_eur: int, fees_and_risk_eur: int):
-        fee_split = next(sub for sub in actual_tx.subtransactions if sub.category == config.actual_fee_category)
-        main_split = next(sub for sub in actual_tx.subtransactions if sub.category != config.actual_fee_category)
+        subtransactions = [sub for sub in actual_tx.subtransactions or [] if sub is not None]
+        fee_split = next((sub for sub in subtransactions if sub.category == config.actual_fee_category), None)
+        main_split = next((sub for sub in subtransactions if sub.category != config.actual_fee_category), None)
+        if fee_split is None or main_split is None:
+            raise ValueError("Actual transaction is missing required splits")
 
         self.actual.patch_transaction(account, actual_tx, {
             "cleared": tx.status_enum == Transaction.Status.PAID,

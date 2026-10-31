@@ -29,7 +29,7 @@ def test_import_uses_utc_cutoff_for_aware_plaid_update(mocker):
     dates.get_last_due_date.return_value = statement_date - timedelta(days=25)
     dates.get_statement_date_for_due_date.return_value = statement_date
     service = ImportService(mocker.Mock(), repository, mocker.Mock(), dates, mocker.Mock())
-    service._send_notification = mocker.Mock()
+    mocker.patch.object(service, "_send_notification")
 
     service.import_transactions_all_accounts(mocker.Mock())
 
@@ -39,7 +39,7 @@ def test_import_uses_utc_cutoff_for_aware_plaid_update(mocker):
 def test_plaid_update_preserves_instant_from_non_utc_offset(mocker):
     service = PlaidService(mocker.Mock())
     gauge = mocker.Mock()
-    service._get_gauge = mocker.Mock(return_value=gauge)
+    mocker.patch.object(service, "_get_gauge", return_value=gauge)
     plaid_account = PlaidAccount(id=1, name="Card", plaid_account_id="plaid-1", connection_id=1)
     update = datetime(2026, 10, 31, 12, tzinfo=timezone(timedelta(hours=-4)))
 

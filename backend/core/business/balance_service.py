@@ -7,6 +7,7 @@ from core.dataaccess.store import Store
 from data_import.facade import DataImportFacade
 from exchangerate.facade import ExchangeRateFacade
 from models import Exchange, Credit, Transaction, Payment, User
+from persistence import require_persisted_id
 
 
 class BalanceService:
@@ -27,7 +28,7 @@ class BalanceService:
 
     def calc_exchange_remaining(self, session: Session, exchange: Exchange, include_pending=False, include_posted=False) -> int:
         balance = exchange.amount_usd
-        query = self.store.get_exchange_payments_by_exchange(session, exchange.id)
+        query = self.store.get_exchange_payments_by_exchange(session, require_persisted_id(exchange.id, "Exchange"))
 
         for exchange_payment in query:
             status = exchange_payment.payment.status_enum
@@ -42,7 +43,7 @@ class BalanceService:
     def calc_credit_remaining(self, session: Session, credit: Credit) -> int:
         balance = credit.amount_usd
 
-        query = self.store.get_credit_transactions_by_credit(session, credit.id)
+        query = self.store.get_credit_transactions_by_credit(session, require_persisted_id(credit.id, "Credit"))
 
         for credit_transaction in query:
             balance -= credit_transaction.amount
@@ -55,7 +56,7 @@ class BalanceService:
     def calc_transaction_remaining(self, session: Session, tx: Transaction) -> int:
         balance = tx.amount_usd
 
-        query = self.store.get_credit_transactions_by_transaction(session, tx.id)
+        query = self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx.id, "Transaction"))
 
         for credit_transaction in query:
             balance -= credit_transaction.amount
@@ -68,7 +69,7 @@ class BalanceService:
     def calc_payment_remaining(self, session: Session, payment: Payment) -> int:
         balance = payment.amount_usd
 
-        query = self.store.get_exchange_payments_by_payment(session, payment.id)
+        query = self.store.get_exchange_payments_by_payment(session, require_persisted_id(payment.id, "Payment"))
 
         for exchange_payment in query:
             balance -= exchange_payment.amount
@@ -82,13 +83,14 @@ class BalanceService:
         result = {}
         accounts = self.store.get_all_accounts(session) if user.super_user else self.store.get_accounts_of_user(session, user)
         for account in accounts:
-            posted_tx = self.store.get_posted_transaction_amount(session, account.id)
-            posted_credits = self.store.get_posted_credit_amount(session, account.id)
-            posted_payments = self.store.get_posted_payment_amount(session, account.id)
-            pending = self.store.get_pending_transaction_amount(session, account.id)
+            account_id = require_persisted_id(account.id, "Account")
+            posted_tx = self.store.get_posted_transaction_amount(session, account_id)
+            posted_credits = self.store.get_posted_credit_amount(session, account_id)
+            posted_payments = self.store.get_posted_payment_amount(session, account_id)
+            pending = self.store.get_pending_transaction_amount(session, account_id)
             last_successful_update = self.data_import.get_last_successful_update(session, account.plaid_account_id) if account.plaid_account_id else None
 
-            result[account.id] = {
+            result[account_id] = {
                 "posted": posted_tx - posted_credits - posted_payments,
                 "pending": pending,
                 "total_spent": posted_tx,
@@ -104,7 +106,7 @@ class BalanceService:
         balance = 0
         for tx in transactions:
             amount = tx.amount_usd
-            for ct in self.store.get_credit_transactions_by_transaction(session, tx.id):
+            for ct in self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx.id, "Transaction")):
                 amount -= ct.amount
 
             balance += amount
@@ -161,6 +163,7 @@ class BalanceService:
         exchange_rate_weighted_sum = Decimal(0)
 
         for tx in transactions:
+            exchange_rate: Decimal | None
             if tx.amount_eur == 0:
                 continue
             elif tx.amount_eur is not None:

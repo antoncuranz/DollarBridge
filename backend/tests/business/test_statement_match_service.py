@@ -1,7 +1,8 @@
 import pytest
+from typing import cast
 
 from fastapi import HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from core.dataaccess.account_repository import AccountRepository
 from core.dataaccess.credit_repository import CreditRepository
@@ -14,6 +15,8 @@ from exchangerate.dataaccess.exchangerate_repository import ExchangeRateReposito
 from exchangerate.facade import ExchangeRateFacade
 from models import Account, BankAccount, Transaction, User
 from statement_match.business.statement_match_service import CandidateTransaction, StatementMatchService
+from statement_match.adapter.llm_client import StatementMatchLlmClient
+from statement_match.adapter.pdf_extractor import PdfExtractor
 from tests.fixtures import ACCOUNT_1, ALICE_USER, BANK_ACCOUNT_1
 from tests.mockclients.exchangerates import MockExchangeRateClient
 from tests.mockclients.statement_match import MockPdfExtractor, MockStatementMatchLlmClient
@@ -28,8 +31,8 @@ def create_service() -> StatementMatchService:
             PaymentRepository(),
             ExchangeRepository(),
         ),
-        MockPdfExtractor(),
-        MockStatementMatchLlmClient(),
+        cast(PdfExtractor, MockPdfExtractor()),
+        cast(StatementMatchLlmClient, MockStatementMatchLlmClient()),
         ExchangeRateFacade(
             ExchangeRateService(
                 MockExchangeRateClient(),
@@ -45,6 +48,10 @@ def setup(session: Session):
     MockPdfExtractor.reset()
     MockStatementMatchLlmClient.reset()
     session.add_all([User(**ALICE_USER), BankAccount(**BANK_ACCOUNT_1), Account(**ACCOUNT_1)])
+
+
+def get_test_user(session: Session) -> User:
+    return session.exec(select(User).where(User.id == 1)).one()
 
 
 def test_match_statement_preserves_one_result_per_transaction(session: Session):
@@ -97,7 +104,7 @@ def test_match_statement_preserves_one_result_per_transaction(session: Session):
         ]
     }
 
-    response = create_service().match_statement(session, session.get(User, 1), 1, b"pdf")
+    response = create_service().match_statement(session, get_test_user(session), 1, b"pdf")
 
     assert [result.transaction_id for result in response.results] == [1, 2]
     assert response.results[0].amount_eur == 850
@@ -158,7 +165,7 @@ def test_match_statement_accepts_integer_cent_amounts(session: Session):
         ]
     }
 
-    response = create_service().match_statement(session, session.get(User, 1), 1, b"pdf")
+    response = create_service().match_statement(session, get_test_user(session), 1, b"pdf")
 
     assert response.results[0].amount_eur == 1235
 
@@ -193,7 +200,7 @@ def test_match_statement_rejects_decimal_eur_amounts(session: Session):
     }
 
     with pytest.raises(HTTPException) as exc_info:
-        create_service().match_statement(session, session.get(User, 1), 1, b"pdf")
+        create_service().match_statement(session, get_test_user(session), 1, b"pdf")
 
     assert exc_info.value.status_code == 502
 
@@ -228,6 +235,6 @@ def test_match_statement_rejects_out_of_range_confidence(session: Session):
     }
 
     with pytest.raises(HTTPException) as exc_info:
-        create_service().match_statement(session, session.get(User, 1), 1, b"pdf")
+        create_service().match_statement(session, get_test_user(session), 1, b"pdf")
 
     assert exc_info.value.status_code == 502

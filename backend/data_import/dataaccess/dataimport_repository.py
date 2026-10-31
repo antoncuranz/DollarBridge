@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional, List
 
-from sqlmodel import Session, select, func, true
+from sqlmodel import Session, col, select, func, true
 
 from models import Account, Transaction, Credit, Payment, PlaidAccount, PlaidConnection
 from models import User, BankAccount
@@ -14,10 +14,10 @@ class DataImportRepository:
         return session.exec(stmt).first()
     
     def get_all_accounts(self, session: Session) -> List[Account]:
-        return session.exec(select(Account).where(Account.active.is_(True))).all()
+        return list(session.exec(select(Account).where(col(Account.active).is_(True))).all())
     
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
-        return session.exec(select(BankAccount)).all()
+        return list(session.exec(select(BankAccount)).all())
 
     def get_pending_payment(self, session: Session, account_id: int, due_date: datetime.date, amount_usd: int | None = None) -> Optional[Payment]:
         query = (Payment.account_id == account_id) & (Payment.date == due_date) & (Payment.status == Payment.Status.PENDING.value)
@@ -45,7 +45,7 @@ class DataImportRepository:
         stmt = select(Payment).join(Account).where(
             (Account.bank_account_id == bank_account_id) & (Payment.status == Payment.Status.PENDING.value) & (date_from <= Payment.date) & (Payment.date <= date_to)
         )
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
     
     def get_payment_by_import_id(self, session: Session, import_id: str) -> Optional[Payment]:
         stmt = select(Payment).where(Payment.import_id == import_id)
@@ -61,9 +61,8 @@ class DataImportRepository:
 
     def get_or_create_payment(self, session: Session, import_id: str, args) -> tuple[Payment, bool]:
         model = self.get_payment_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Payment(**args)
         session.add(model)
 
@@ -71,9 +70,8 @@ class DataImportRepository:
 
     def get_or_create_transaction(self, session: Session, import_id: str, args) -> tuple[Transaction, bool]:
         model = self.get_transaction_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Transaction(**args)
         session.add(model)
 
@@ -81,9 +79,8 @@ class DataImportRepository:
     
     def get_or_create_credit(self, session: Session, import_id: str, args) -> tuple[Credit, bool]:
         model = self.get_credit_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Credit(**args)
         session.add(model)
 
@@ -97,7 +94,7 @@ class DataImportRepository:
     def get_plaid_connections(self, session: Session, user: User) -> List[PlaidConnection]:
         query = (PlaidConnection.user_id == user.id) if not user.super_user else true()
         stmt = select(PlaidConnection).where(query)
-        return session.exec(stmt).all()
+        return list(session.exec(stmt).all())
 
     def get_plaid_connection(self, session: Session, user: User, connection_id: int) -> Optional[PlaidConnection]:
         query = (PlaidConnection.user_id == user.id) if not user.super_user else true()
@@ -107,9 +104,8 @@ class DataImportRepository:
     def get_or_create_plaid_account(self, session: Session, plaid_account_id: str, args) -> tuple[PlaidAccount, bool]:
         stmt = select(PlaidAccount).where(PlaidAccount.plaid_account_id == plaid_account_id)
         model = session.exec(stmt).first()
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = PlaidAccount(**args)
         session.add(model)
 
@@ -117,4 +113,5 @@ class DataImportRepository:
 
     def get_last_successful_update(self, session: Session, plaid_account_id: int) -> Optional[datetime.datetime]:
         stmt = select(PlaidAccount).where(PlaidAccount.id == plaid_account_id)
-        return session.exec(stmt).first().last_successful_update
+        account = session.exec(stmt).first()
+        return account.last_successful_update if account is not None else None
