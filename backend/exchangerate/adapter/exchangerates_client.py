@@ -1,4 +1,5 @@
 import requests
+from curl_cffi import requests as browser_requests
 
 from config import config
 
@@ -32,14 +33,10 @@ class MastercardClient(IExchangeRateClient):
             "transaction_amount": 100
         }
 
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:149.0) Gecko/20100101 Firefox/149.0",
-            "Accept-Encoding": "gzip, deflate, br, zstd"
-        }
-
         try:
-            response = requests.get(self._URL, params=params, headers=headers).json()
-            return response["data"]["conversionRate"]
+            response = browser_requests.get(self._URL, params=params, impersonate="chrome", timeout=20)
+            response.raise_for_status()
+            return response.json()["data"]["conversionRate"]
         except Exception as error:
             print("Error retrieving conversion rate: ", error)
             return None  # TODO: raise?
