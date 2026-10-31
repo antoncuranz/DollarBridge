@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Annotated
+from typing import Annotated, Iterable, List
 
 from fastapi import Depends, HTTPException
 from sqlmodel import Session
@@ -37,14 +37,21 @@ class PaymentService:
         if payment.status == Payment.Status.PENDING.value:
             try:
                 guessed_transactions = self._guess_transactions_to_process(session, payment)
-                amounts = [tx.amount_eur for tx in guessed_transactions]
-                return None if any(amount is None for amount in amounts) else sum(amount for amount in amounts if amount is not None)
+                return self._sum_eur_amounts(guessed_transactions)
             except Exception as e:
                 print("Unable to calculate amount_eur (probably some tx.amount_eur is missing): " + str(e))
                 return None
 
-        amounts = [tx.amount_eur for tx in payment.transactions]
-        return None if any(amount is None for amount in amounts) else sum(amount for amount in amounts if amount is not None)
+        return self._sum_eur_amounts(payment.transactions)
+
+    @staticmethod
+    def _sum_eur_amounts(transactions: Iterable[Transaction]) -> int | None:
+        total = 0
+        for transaction in transactions:
+            if transaction.amount_eur is None:
+                return None
+            total += transaction.amount_eur
+        return total
 
     def process_payment(self, session: Session, super_user: User, payment_id: int, transaction_ids: list[int] | None = None):
         if not super_user.super_user:
@@ -200,8 +207,9 @@ class PaymentService:
             tx.status_enum = Transaction.Status.PAID
             session.add(tx)
 
-        payment_amount_eur = round(amount_eur)
-        payment.amount_eur = payment_amount_eur
+        # Reconcile against the exact rounded amount stored on the payment.
+        rounded_amount_eur = round(amount_eur)
+        payment.amount_eur = rounded_amount_eur
         payment.status_enum = Payment.Status.PROCESSED
         session.add(payment)
 
@@ -209,7 +217,7 @@ class PaymentService:
         for tx in transactions:
             assert tx.amount_eur is not None and tx.fees_and_risk_eur is not None
             eur_sum += tx.amount_eur + tx.fees_and_risk_eur
-        eur_err = payment_amount_eur - eur_sum
+        eur_err = rounded_amount_eur - eur_sum
         print("Calculated eur_err of " + str(eur_err)) # TODO: send notification or display in frontend
 
         # apply error to largest transaction
