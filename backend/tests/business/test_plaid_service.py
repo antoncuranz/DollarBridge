@@ -87,7 +87,7 @@ def test_get_account_balance(mocker):
     mocker.patch.object(plaid_api.PlaidApi, "accounts_get", accounts_get_mock)
 
     item_get_mock = mocker.Mock()
-    item_get_response = ItemGetResponse(item=None, request_id="request-1", status=ItemStatusNullable(transactions=ItemStatusTransactions(last_successful_update=datetime.datetime.now(), last_failed_update=None)), _check_type=False)
+    item_get_response = ItemGetResponse(item=None, request_id="request-1", status=ItemStatusNullable(transactions=ItemStatusTransactions(last_successful_update=datetime.datetime.now(datetime.timezone.utc), last_failed_update=None)), _check_type=False)
     item_get_mock.return_value = item_get_response
     mocker.patch.object(plaid_api.PlaidApi, "item_get", item_get_mock)
 
@@ -125,7 +125,7 @@ def test_sync_transactions(mocker):
     mocker.patch.object(plaid_api.PlaidApi, "transactions_sync", sync_response_mock)
     
     item_get_mock = mocker.Mock()
-    item_get_response = ItemGetResponse(item=None, request_id="request-1", status=ItemStatusNullable(transactions=ItemStatusTransactions(last_successful_update=datetime.datetime.now(), last_failed_update=None)), _check_type=False)
+    item_get_response = ItemGetResponse(item=None, request_id="request-1", status=ItemStatusNullable(transactions=ItemStatusTransactions(last_successful_update=datetime.datetime.now(datetime.timezone.utc), last_failed_update=None)), _check_type=False)
     item_get_mock.return_value = item_get_response
     mocker.patch.object(plaid_api.PlaidApi, "item_get", item_get_mock)
 

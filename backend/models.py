@@ -3,6 +3,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import List
 
+from sqlalchemy import DateTime
 from sqlmodel import create_engine, Session, SQLModel, Relationship, Field
 
 from config import config
@@ -34,7 +35,7 @@ class PlaidAccount(SQLModel, table=True):
     connection_id: int = Field(foreign_key="plaidconnection.id")
     connection: "PlaidConnection" = Relationship(back_populates="plaid_accounts")
     cursor: str | None = None
-    last_successful_update: datetime.datetime | None = None
+    last_successful_update: datetime.datetime | None = Field(default=None, sa_type=DateTime(timezone=True))
 
 
 class PlaidConnection(SQLModel, table=True):
