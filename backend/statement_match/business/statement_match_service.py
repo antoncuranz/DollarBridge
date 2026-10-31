@@ -129,6 +129,7 @@ class StatementMatchService:
         )
 
     def _to_candidate_payload(self, transaction: Transaction) -> CandidateTransaction:
+        assert transaction.id is not None
         return CandidateTransaction(
             transaction_id=transaction.id,
             date=transaction.date.isoformat(),
@@ -231,6 +232,7 @@ class StatementMatchService:
 
         enriched_results = []
         for transaction in transactions:
+            assert transaction.id is not None
             guessed_amount_eur = self.exchangerate.guess_amount_eur(session, transaction)
             result = results_by_id[transaction.id]
             enriched_results.append(

@@ -14,7 +14,7 @@ def get_username(user: Annotated[User, Depends(get_current_user)]):
 
 
 @router.get("/super", response_model=bool)
-def get_username(user: Annotated[User, Depends(get_current_user)]):
+def get_super_user(user: Annotated[User, Depends(get_current_user)]):
     return user.super_user
 
 

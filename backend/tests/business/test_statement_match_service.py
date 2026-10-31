@@ -126,7 +126,7 @@ def test_build_prompt_uses_integer_cent_contract():
     assert '"amount_eur": 1144' in prompt
     assert "amount_usd is already known and is in USD cents." in prompt
     assert "Do not return decimal EUR values like 11.44." in prompt
-    assert "If the statement does not explicitly show a EUR amount for a candidate, do not infer or fabricate one from amount_usd; prefer matched=false." in prompt
+    assert "Do not infer a EUR amount from amount_usd; return matched=false." in prompt
 
 
 def test_match_statement_accepts_integer_cent_amounts(session: Session):

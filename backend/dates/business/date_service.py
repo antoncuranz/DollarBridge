@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlmodel import Session
 
 from dates.dataaccess.dates_repository import DatesRepository
-from models import Account, User, engine
+from models import Account, User
 
 
 class DateService:

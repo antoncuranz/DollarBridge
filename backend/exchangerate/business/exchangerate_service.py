@@ -27,7 +27,7 @@ class ExchangeRateService:
         try:
             exchange_rate = self.get_exchange_rate(session, transaction.date)
             return int(transaction.amount_usd / exchange_rate)
-        except:
+        except Exception:
             return None
 
     def get_exchange_rate(self, session: Session, date: datetime.date, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD) -> Optional[Decimal]:
