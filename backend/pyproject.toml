@@ -11,7 +11,7 @@ dependencies = [
     "ibind==0.1.15",
     "openai==2.43.0",
     "paho-mqtt==2.1.0",
-    "pebble==5.1.1",
+    "pebble==5.2.3",
     "plaid-python==34.0.0",
     "prometheus-client==0.22.1",
     "psycopg2-binary==2.9.10",
