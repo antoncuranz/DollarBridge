@@ -28,8 +28,12 @@ const PlaidLinkButton = ({updateId, onDone}: {
     }
   }, [token, createLinkToken]);
 
-  const onSuccess = useCallback(async (publicToken: string) => {
+  const onSuccess = useCallback(async (publicToken: string | null) => {
     setInProgress(true);
+    if (!publicToken) {
+      setInProgress(false);
+      return;
+    }
     if (!updateId) {
       await fetch("/api/import/plaid/exchange_token?public_token=" + publicToken, {
         method: "POST",

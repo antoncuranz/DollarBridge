@@ -1,7 +1,7 @@
 "use client"
 
 import {Calendar} from "@/components/ui/calendar.tsx";
-import {DayModifiers, ModifiersStyles} from "react-day-picker";
+import type {ModifiersStyles} from "react-day-picker";
 import {CSSProperties, useEffect, useState} from "react";
 import {AccountDates} from "@/types.ts";
 import {useTheme} from "next-themes";
@@ -19,7 +19,7 @@ const DueDateCalendar = () => {
     await onCalendarMonthChange(new Date())
   }
   
-  function getModifiers(): DayModifiers {
+  function getModifiers(): Record<string, Date[]> {
     const modifiers: { [cls: string]: Date[] } = {
       dueDates: Object.values(dueDates).map(x => new Date(x.due)),
       statementDates: Object.values(dueDates).map(x => new Date(x.statement))
