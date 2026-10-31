@@ -1,4 +1,5 @@
 import time
+from datetime import timezone
 from decimal import Decimal
 from typing import Annotated
 
@@ -85,9 +86,7 @@ class PlaidService:
         
         item_get_request = ItemGetRequest(access_token=access_token)
         item_get_response = self.client.item_get(item_get_request)
-        plaid_account.last_successful_update = item_get_response.status.transactions.last_successful_update
-
-        self._get_gauge(plaid_account.id).set(plaid_account.last_successful_update.timestamp())
+        self._set_last_successful_update(plaid_account, item_get_response.status.transactions.last_successful_update)
 
         account = next(account for account in accounts_get_response["accounts"] if account["account_id"] == plaid_account.plaid_account_id)
         return int(Decimal(account["balances"]["current"] * 100).quantize(1))
@@ -120,9 +119,7 @@ class PlaidService:
         
         item_get_request = ItemGetRequest(access_token=access_token)
         item_get_response = self.client.item_get(item_get_request)
-        plaid_account.last_successful_update = item_get_response.status.transactions.last_successful_update
-
-        self._get_gauge(plaid_account.id).set(plaid_account.last_successful_update.timestamp())
+        self._set_last_successful_update(plaid_account, item_get_response.status.transactions.last_successful_update)
 
         return added, modified, removed, response["next_cursor"]
     
@@ -147,3 +144,12 @@ class PlaidService:
             last_update_gauges[gauge_name] = Gauge(gauge_name, "Timestamp of the last successful update")
 
         return last_update_gauges[gauge_name]
+
+    def _set_last_successful_update(self, plaid_account: PlaidAccount, last_update):
+        if last_update is None:
+            return
+        if last_update.utcoffset() is None:
+            raise ValueError("Plaid last_successful_update has no UTC offset")
+
+        plaid_account.last_successful_update = last_update.astimezone(timezone.utc)
+        self._get_gauge(plaid_account.id).set(plaid_account.last_successful_update.timestamp())
