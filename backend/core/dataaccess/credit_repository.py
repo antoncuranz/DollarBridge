@@ -61,11 +61,9 @@ class CreditRepository:
     def get_or_create_credit_transaction(self, session: Session, credit_id: int, transaction_id: int, amount: int)\
             -> tuple[CreditTransaction, bool]:
         model = self.get_credit_transaction(session, credit_id, transaction_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = CreditTransaction(credit_id=credit_id, transaction_id=transaction_id, amount=amount)
-        assert model is not None
         session.add(model)
 
         return model, created

@@ -450,7 +450,8 @@ def _assert_transaction_actual_ids(engine, transaction_actual_ids):
 
 
 def _get_sum_eur_usd_and_payment(session: Session, payment_id: int | None):
-    assert payment_id is not None
+    if payment_id is None:
+        raise ValueError("Payment has no persisted ID")
     sum_eur = session.exec(
         select(func.sum(col(Transaction.amount_eur) + col(Transaction.fees_and_risk_eur)))
         .where(Transaction.payment_id == payment_id)

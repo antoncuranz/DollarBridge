@@ -2,7 +2,7 @@ import pytest
 from typing import cast
 
 from fastapi import HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from core.dataaccess.account_repository import AccountRepository
 from core.dataaccess.credit_repository import CreditRepository
@@ -51,9 +51,7 @@ def setup(session: Session):
 
 
 def get_test_user(session: Session) -> User:
-    user = session.get(User, 1)
-    assert user is not None
-    return user
+    return session.exec(select(User).where(User.id == 1)).one()
 
 
 def test_match_statement_preserves_one_result_per_transaction(session: Session):

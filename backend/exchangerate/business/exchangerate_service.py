@@ -9,6 +9,7 @@ from exchangerate.adapter.exchangerates_client import IExchangeRateClient, Excha
     MastercardClient
 from exchangerate.dataaccess.exchangerate_repository import ExchangeRateRepository
 from models import Transaction, ExchangeRate, Account
+from persistence import require_persisted_id
 
 
 class ExchangeRateService:
@@ -20,8 +21,8 @@ class ExchangeRateService:
         self.repository = repository
         
     def fetch_exchange_rates(self, session: Session, account: Account, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD):
-        assert account.id is not None
-        transactions = self.repository.get_transactions_without_eur_amount(session, account.id)
+        account_id = require_persisted_id(account.id, "Account")
+        transactions = self.repository.get_transactions_without_eur_amount(session, account_id)
         [self.get_exchange_rate(session, date, source) for date in set([tx.date for tx in transactions])]
 
     def guess_amount_eur(self, session: Session, transaction: Transaction) -> int | None:

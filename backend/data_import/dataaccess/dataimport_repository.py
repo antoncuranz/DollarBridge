@@ -61,33 +61,27 @@ class DataImportRepository:
 
     def get_or_create_payment(self, session: Session, import_id: str, args) -> tuple[Payment, bool]:
         model = self.get_payment_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Payment(**args)
-        assert model is not None
         session.add(model)
 
         return model, created
 
     def get_or_create_transaction(self, session: Session, import_id: str, args) -> tuple[Transaction, bool]:
         model = self.get_transaction_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Transaction(**args)
-        assert model is not None
         session.add(model)
 
         return model, created
     
     def get_or_create_credit(self, session: Session, import_id: str, args) -> tuple[Credit, bool]:
         model = self.get_credit_by_import_id(session, import_id)
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = Credit(**args)
-        assert model is not None
         session.add(model)
 
         return model, created
@@ -110,11 +104,9 @@ class DataImportRepository:
     def get_or_create_plaid_account(self, session: Session, plaid_account_id: str, args) -> tuple[PlaidAccount, bool]:
         stmt = select(PlaidAccount).where(PlaidAccount.plaid_account_id == plaid_account_id)
         model = session.exec(stmt).first()
-        created = not model
-
-        if created:
+        created = model is None
+        if model is None:
             model = PlaidAccount(**args)
-        assert model is not None
         session.add(model)
 
         return model, created

@@ -90,11 +90,10 @@ class ExchangeRepository:
     def get_or_create_exchange_payment(self, session: Session, exchange_id: int, payment_id: int, amount: int)\
             -> tuple[ExchangePayment, bool]:
         model = self.get_exchange_payment(session, exchange_id, payment_id)
-        created = not model
-        
-        if created:
+        created = model is None
+
+        if model is None:
             model = ExchangePayment(exchange_id=exchange_id, payment_id=payment_id, amount=amount)
-        assert model is not None
         session.add(model)
         
         return model, created

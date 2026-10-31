@@ -10,6 +10,7 @@ from core.business.exchange_service import ExchangeService
 from core.dataaccess.store import Store
 from data_export.facade import DataExportFacade
 from models import Transaction, ExchangePayment, Payment, User, PaymentWithAmounts
+from persistence import require_persisted_id
 
 
 class PaymentService:
@@ -71,18 +72,18 @@ class PaymentService:
         else:
             transactions = self._guess_transactions_to_process(session, payment)
 
-        assert payment.account.id is not None
-        for tx in transactions:
-            assert tx.id is not None
+        account_id = require_persisted_id(payment.account.id, "Account")
         actual_payment_id = None
-        original_actual_ids = {tx.id: tx.actual_id for tx in transactions}
+        original_actual_ids = {
+            require_persisted_id(tx.id, "Transaction"): tx.actual_id for tx in transactions
+        }
 
         try:
             self._process_payment(session, payment, transactions)
 
             if super_user == payment.account.user:
-                self.data_export.update_transactions(session, super_user, payment.account.id, transactions)
-            actual_payment_id = self.data_export.export_payment(session, super_user, payment.account.id, payment)
+                self.data_export.update_transactions(session, super_user, account_id, transactions)
+            actual_payment_id = self.data_export.export_payment(session, super_user, account_id, payment)
             session.commit()
         except Exception:
             created_transaction_actual_ids = {
@@ -125,8 +126,8 @@ class PaymentService:
         session.commit()
 
         if super_user == payment.account.user:
-            assert payment.account.id is not None
-            self.data_export.update_transactions(session, super_user, payment.account.id, transactions)
+            account_id = require_persisted_id(payment.account.id, "Account")
+            self.data_export.update_transactions(session, super_user, account_id, transactions)
 
         if payment.actual_id is not None:
             self.data_export.delete_payment(super_user, payment.actual_id)
@@ -149,8 +150,8 @@ class PaymentService:
         session.commit()
 
     def _guess_transactions_to_process(self, session: Session, payment: Payment):
-        assert payment.account.id is not None
-        transactions = self.store.get_posted_transactions_by_account(session, payment.account.id)
+        account_id = require_persisted_id(payment.account.id, "Account")
+        transactions = self.store.get_posted_transactions_by_account(session, account_id)
 
         process_tx = []
         amount = payment.amount_usd
@@ -197,13 +198,13 @@ class PaymentService:
         if payment.amount_usd != tx_remaining_sum:
             raise Exception("Error: Payment amount does not match sum of transactions!")
 
-        assert payment.id is not None
-        exchange_payments = self.store.get_exchange_payments_by_payment(session, payment.id)
+        payment_id = require_persisted_id(payment.id, "Payment")
+        exchange_payments = self.store.get_exchange_payments_by_payment(session, payment_id)
         amount_eur = self._calc_payment_amount_eur(exchange_payments)
 
         for tx in transactions:
             tx.fees_and_risk_eur = self._calc_fees_and_risk(session, tx, payment, exchange_payments, amount_eur)
-            tx.payment_id = payment.id
+            tx.payment_id = payment_id
             tx.status_enum = Transaction.Status.PAID
             session.add(tx)
 
@@ -215,20 +216,23 @@ class PaymentService:
 
         eur_sum = 0
         for tx in transactions:
-            assert tx.amount_eur is not None and tx.fees_and_risk_eur is not None
+            if tx.amount_eur is None or tx.fees_and_risk_eur is None:
+                raise ValueError("Processed transaction is missing a EUR amount or fees")
             eur_sum += tx.amount_eur + tx.fees_and_risk_eur
         eur_err = rounded_amount_eur - eur_sum
         print("Calculated eur_err of " + str(eur_err)) # TODO: send notification or display in frontend
 
         # apply error to largest transaction
         largest_tx = max(transactions, key=lambda tx: tx.amount_eur or 0)
-        assert largest_tx.fees_and_risk_eur is not None
-        largest_tx.fees_and_risk_eur += eur_err
+        if largest_tx.fees_and_risk_eur is None:
+            raise ValueError("Processed transaction is missing fees")
+        largest_tx.fees_and_risk_eur = largest_tx.fees_and_risk_eur + eur_err
         session.add(largest_tx)
     def _calc_fees_and_risk(self, session: Session, tx: Transaction, payment: Payment, exchange_payments: List[ExchangePayment], payment_amount_eur: Decimal) -> int:
         if tx.amount_eur == 0:
             return 0
-        assert tx.amount_eur is not None
+        if tx.amount_eur is None:
+            raise ValueError("Transaction is missing a EUR amount")
 
         neutral_sum = self._calc_neutral_sum(exchange_payments)
         eur_usd_exchanged = Decimal(payment.amount_usd - neutral_sum) / payment_amount_eur

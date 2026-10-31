@@ -9,6 +9,7 @@ from sqlmodel import Session
 from config import config
 from data_import.dataaccess.dataimport_repository import DataImportRepository
 from models import Account, BankAccount, Payment, Transaction, Credit
+from persistence import require_persisted_id
 
 
 class AbstractImporter(ABC):
@@ -28,10 +29,10 @@ class AbstractImporter(ABC):
         pass
 
     def _process_payment(self, session: Session, account: Account, tx) -> Payment:
-        assert account.id is not None
-        args = self._make_transaction_args(tx, account.id)
+        account_id = require_persisted_id(account.id, "Account")
+        args = self._make_transaction_args(tx, account_id)
         
-        pending_payment = self.repository.get_pending_payment(session, account.id, args["date"], args["amount_usd"])
+        pending_payment = self.repository.get_pending_payment(session, account_id, args["date"], args["amount_usd"])
         if pending_payment:
             print("Matching payment " + str(pending_payment.id))
             for key, value in args.items():

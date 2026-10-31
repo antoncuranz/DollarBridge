@@ -21,6 +21,7 @@ from sqlmodel import Session
 from config import config
 from data_import.dataaccess.dataimport_repository import DataImportRepository
 from data_import.metrics import last_update_gauges
+from persistence import require_persisted_id
 from models import User, PlaidAccount
 
 
@@ -58,8 +59,7 @@ class PlaidService:
         connection = self.repository.create_plaid_connection(session, user, exchange_response.item_id, exchange_response.access_token)
         session.commit()
         
-        assert connection.id is not None
-        self.discover_accounts(session, user, connection.id)
+        self.discover_accounts(session, user, require_persisted_id(connection.id, "PlaidConnection"))
         return exchange_response.to_dict()
     
     def discover_accounts(self, session: Session, user: User, connection_id: int):
@@ -153,5 +153,5 @@ class PlaidService:
             raise ValueError("Plaid last_successful_update has no UTC offset")
 
         plaid_account.last_successful_update = last_update.astimezone(timezone.utc)
-        assert plaid_account.id is not None
-        self._get_gauge(plaid_account.id).set(plaid_account.last_successful_update.timestamp())
+        plaid_account_id = require_persisted_id(plaid_account.id, "PlaidAccount")
+        self._get_gauge(plaid_account_id).set(plaid_account.last_successful_update.timestamp())

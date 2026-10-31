@@ -8,6 +8,7 @@ from core.dataaccess.store import Store
 from data_export.facade import DataExportFacade
 from exchangerate.facade import ExchangeRateFacade
 from models import Transaction, User, TransactionWithGuessedAmount
+from persistence import require_persisted_id
 
 
 class TransactionService:
@@ -50,8 +51,8 @@ class TransactionService:
         session.commit()
 
         if transaction.actual_id is not None:
-            assert transaction.account.id is not None
-            self.data_export.update_transaction(session, user, transaction.account.id, transaction)
+            account_id = require_persisted_id(transaction.account.id, "Account")
+            self.data_export.update_transaction(session, user, account_id, transaction)
 
     def mark_cashback(self, session: Session, user: User, tx_id: int):
         transaction = self.store.get_transaction(session, user, tx_id)
@@ -61,8 +62,8 @@ class TransactionService:
         if transaction.status_enum != Transaction.Status.POSTED or transaction.amount_usd <= 0:
             raise HTTPException(status_code=400, detail="Only posted transactions with a positive USD amount can be marked as cashback")
 
-        assert transaction.id is not None
-        if self.store.get_cashback_exchange(session, transaction.id) is not None:
+        transaction_id = require_persisted_id(transaction.id, "Transaction")
+        if self.store.get_cashback_exchange(session, transaction_id) is not None:
             return
 
         self.store.create_exchange(
@@ -73,7 +74,7 @@ class TransactionService:
             amount_eur=0,
             paid_eur=0,
             fees_eur=0,
-            cashback_transaction_id=transaction.id,
+            cashback_transaction_id=transaction_id,
         )
 
         amount_changed = transaction.amount_eur != 0
@@ -86,20 +87,20 @@ class TransactionService:
             raise
 
         if amount_changed and transaction.actual_id is not None:
-            assert transaction.account.id is not None
-            self.data_export.update_transaction(session, user, transaction.account.id, transaction)
+            account_id = require_persisted_id(transaction.account.id, "Account")
+            self.data_export.update_transaction(session, user, account_id, transaction)
 
     def undo_cashback(self, session: Session, user: User, tx_id: int):
         transaction = self.store.get_transaction(session, user, tx_id)
         if not transaction:
             raise HTTPException(status_code=404)
 
-        assert transaction.id is not None
-        exchange = self.store.get_cashback_exchange(session, transaction.id)
+        transaction_id = require_persisted_id(transaction.id, "Transaction")
+        exchange = self.store.get_cashback_exchange(session, transaction_id)
         if not exchange:
             raise HTTPException(status_code=400, detail="Transaction is not marked as cashback")
-        assert exchange.id is not None
-        if self.store.get_exchange_payments_by_exchange(session, exchange.id):
+        exchange_id = require_persisted_id(exchange.id, "Exchange")
+        if self.store.get_exchange_payments_by_exchange(session, exchange_id):
             raise HTTPException(status_code=409, detail="Cashback exchange is still assigned to payments")
 
         transaction.amount_eur = None
@@ -112,5 +113,5 @@ class TransactionService:
             raise
 
         if transaction.actual_id is not None:
-            assert transaction.account.id is not None
-            self.data_export.update_transaction(session, user, transaction.account.id, transaction)
+            account_id = require_persisted_id(transaction.account.id, "Account")
+            self.data_export.update_transaction(session, user, account_id, transaction)

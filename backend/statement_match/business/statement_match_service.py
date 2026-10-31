@@ -11,6 +11,7 @@ from sqlmodel import Session
 from core.dataaccess.store import Store
 from exchangerate.facade import ExchangeRateFacade
 from models import Transaction, User
+from persistence import require_persisted_id
 from statement_match.adapter.llm_client import LlmProviderError, StatementMatchLlmClient
 from statement_match.adapter.pdf_extractor import PdfExtractionError, PdfExtractor
 
@@ -129,9 +130,8 @@ class StatementMatchService:
         )
 
     def _to_candidate_payload(self, transaction: Transaction) -> CandidateTransaction:
-        assert transaction.id is not None
         return CandidateTransaction(
-            transaction_id=transaction.id,
+            transaction_id=require_persisted_id(transaction.id, "Transaction"),
             date=transaction.date.isoformat(),
             amount_usd=transaction.amount_usd,
             counterparty=transaction.counterparty,
@@ -232,12 +232,12 @@ class StatementMatchService:
 
         enriched_results = []
         for transaction in transactions:
-            assert transaction.id is not None
+            transaction_id = require_persisted_id(transaction.id, "Transaction")
             guessed_amount_eur = self.exchangerate.guess_amount_eur(session, transaction)
-            result = results_by_id[transaction.id]
+            result = results_by_id[transaction_id]
             enriched_results.append(
                 StatementMatchResult(
-                    transaction_id=transaction.id,
+                    transaction_id=transaction_id,
                     date=transaction.date.isoformat(),
                     amount_usd=transaction.amount_usd,
                     amount_eur=result.amount_eur,

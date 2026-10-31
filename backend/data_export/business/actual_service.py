@@ -11,6 +11,7 @@ from data_export.adapter.actual_client import IActualClient, ActualClient
 from data_export.dataaccess.dataexport_repository import DataExportRepository
 from exchangerate.facade import ExchangeRateFacade
 from models import Transaction, Payment, User, Account
+from persistence import require_persisted_id
 
 
 class ActualService:
@@ -96,8 +97,8 @@ class ActualService:
         if account.user.super_user:
             self.actual.create_transaction(account, self._create_actual_payment(payment, id))
         else:
-            assert payment.id is not None
-            transactions = self.repository.get_paid_transactions_by_payment(session, payment.id)
+            payment_id = require_persisted_id(payment.id, "Payment")
+            transactions = self.repository.get_paid_transactions_by_payment(session, payment_id)
             self.actual.create_transaction_super_misc(super_user, self._create_actual_payment_misc(payment, transactions, id))
 
         payment.actual_id = id
