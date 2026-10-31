@@ -9,7 +9,7 @@ dependencies = [
     "fastapi[standard]==0.115.14",
     "gql==3.5.3",
     "ibind==0.1.15",
-    "openai==2.43.0",
+    "openai==3.42.0",
     "paho-mqtt==2.1.0",
     "pebble==5.1.1",
     "plaid-python==34.0.0",
