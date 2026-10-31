@@ -18,7 +18,7 @@ class BalancesTO(SQLModel):
     pending: int
     credits: int
     exchanged: int
-    virtual_account: int
+    virtual_account: str
     avg_exchange_rate: Decimal
 
 
