@@ -9,6 +9,7 @@ testcontainers[postgres]
 debugpy
 gql
 aiohttp
+curl_cffi==0.17.0
 pebble
 paho-mqtt
 sqlmodel
