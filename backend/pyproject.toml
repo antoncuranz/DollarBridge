@@ -14,7 +14,7 @@ dependencies = [
     "pebble==5.1.1",
     "plaid-python==34.0.0",
     "prometheus-client==0.22.1",
-    "psycopg2-binary==2.9.10",
+    "psycopg2-binary==2.9.13",
     "pydantic==2.11.7",
     "pydantic-settings==2.10.1",
     "pypdf==6.13.3",
