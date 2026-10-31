@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":disableRateLimiting", ":automergeMinor"],
+  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "commitMessageExtra": "from {{{displayFrom}}} to {{{displayTo}}}",
+  "customManagers": [
+    {
+      "description": "Process annotated dependencies",
+      "customType": "regex",
+      "managerFilePatterns": ["/Dockerfile/"],
+      "matchStrings": [
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+(:\\s|=)(&\\S+\\s)?[\"']?(?<currentValue>.+?)[\"']?\\s"
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}github-releases{{/if}}"
+    }
+  ]
+}
