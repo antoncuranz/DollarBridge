@@ -4,30 +4,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'backend/**'
 
 jobs:
   checks:
     uses: ./.github/workflows/backend-checks.yml
 
-  changed-files:
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          base: ${{ github.event.before }}
-          filters: |
-            backend:
-              - 'backend/**'
-
   build:
-    needs: [checks, changed-files]
-    if: needs.changed-files.outputs.backend == 'true'
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:
