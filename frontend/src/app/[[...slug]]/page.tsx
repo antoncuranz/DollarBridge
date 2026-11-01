@@ -1,6 +1,6 @@
 import React, {Suspense} from "react";
 import {Skeleton} from "@/components/ui/skeleton.tsx";
-import AccountSelector from "src/components/AccountSelector";
+import AccountSelector from "@/components/AccountSelector";
 import ImportButton from "@/components/buttons/ImportButton.tsx";
 import ActualButton from "@/components/buttons/ActualButton.tsx";
 import TxSaveButton from "@/components/buttons/TxSaveButton.tsx";
