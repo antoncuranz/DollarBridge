@@ -75,6 +75,12 @@
     body {
       @apply bg-background text-foreground;
     }
+    button:not(:disabled) {
+      cursor: pointer;
+    }
+    [role="tab"][data-state="active"] {
+      outline: none !important;
+    }
   }
 
 /* custom css */
@@ -90,11 +96,13 @@ body {
 
 .cal-due {
   border: none !important;
+  border-radius: 0.375rem;
   color: white !important;
 }
 
 .cal-statement {
   border: 3px solid transparent;
+  border-radius: 0.375rem;
 }
 
 .cal-statement.bg-accent {

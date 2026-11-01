@@ -18,11 +18,11 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4 w-full",
-        month_caption: "flex justify-center pt-1 relative items-center",
+        months: "relative flex flex-col items-center gap-4 sm:flex-row",
+        month: "flex w-full flex-col gap-4",
+        month_caption: "relative flex items-center justify-center pt-1",
         caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
+        nav: "absolute right-0 top-0 z-10 flex items-center gap-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -31,21 +31,21 @@ function Calendar({
           buttonVariants({ variant: "outline" }),
           "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
         ),
-        month_grid: "ml-auto mr-auto border-collapse space-y-1",
-        weekdays: "flex",
+        month_grid: "mx-auto block w-auto border-collapse",
+        weekdays: "flex w-full justify-center",
         weekday:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        week: "flex w-full mt-2",
+          "w-9 shrink-0 rounded-md text-center text-[0.8rem] font-normal text-muted-foreground",
+        week: "mt-2 flex w-full justify-center",
         day: cn(
-          "h-9 w-9 text-center text-sm p-0 relative [&[data-selected].range_end]:rounded-r-md first:[&[data-selected]]:rounded-l-md last:[&[data-selected]]:rounded-r-md focus-within:relative focus-within:z-20"
+          "relative flex h-9 w-9 shrink-0 items-center justify-center p-0 text-center text-sm focus-within:z-20",
         ),
         day_button: cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-          "h-9 w-9 p-0 aria-selected:opacity-100"
+          "inline-flex h-9 w-9 cursor-pointer items-center justify-center whitespace-nowrap rounded-md p-0 text-sm transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+          "aria-selected:opacity-100"
         ),
         range_end: "range_end",
         selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+          "rounded-md bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         today: "font-black text-accent-foreground",
         outside:
           "outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
