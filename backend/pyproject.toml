@@ -24,7 +24,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "debugpy==1.8.14",
+    "debugpy==1.8.22",
     "mypy==2.4.1",
     "pytest==8.4.1",
     "pytest-mock==3.14.1",
