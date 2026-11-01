@@ -767,7 +767,7 @@ requires-dist = [
     { name = "ibind", specifier = "==0.1.15" },
     { name = "openai", specifier = "==2.43.0" },
     { name = "paho-mqtt", specifier = "==2.1.0" },
-    { name = "pebble", specifier = "==5.1.1" },
+    { name = "pebble", specifier = "==5.2.3" },
     { name = "plaid-python", specifier = "==34.0.0" },
     { name = "prometheus-client", specifier = "==0.22.1" },
     { name = "psycopg2-binary", specifier = "==2.9.10" },
@@ -905,11 +905,11 @@ wheels = [
 
 [[package]]
 name = "pebble"
-version = "5.1.1"
+version = "5.2.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5f/5b/90bf2acce03a12750a570cede27b9cddd4b6f5f2cf4de1048231bb21c382/pebble-5.1.1.tar.gz", hash = "sha256:4e91a5b8e48b30b26eaa5391ba2cf65fbb3594fba17b88bc0b3351cf849d0305", size = 38672, upload-time = "2025-03-16T16:23:08.219Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a1/05/8b55d257b54bc0841db1dac5e28e495adc19b4227d73089ce95fc24bf37b/pebble-5.2.3.tar.gz", hash = "sha256:6fce8cc8cbf367588406f66e4b62ec36e22594a6c720bff1d08cc2e565a66af3", size = 42668, upload-time = "2026-10-04T22:29:04.063Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/a7/bece0e6b17b75506c4bf13eb79728931e2f240d7928a02f0e6d2ca9c41e9/pebble-5.1.1-py3-none-any.whl", hash = "sha256:c262c94159cf6419fd4ac27ff72408650a16d6c3cf000171fb2a0386038c416e", size = 34598, upload-time = "2025-03-16T16:22:26.954Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/a2/ab7713b3b90f240500259fd2b90a284259ed332a03de4813cb5e1efe1758/pebble-5.2.3-py3-none-any.whl", hash = "sha256:9f25c2b8bf4716b51f78b74fea4d58b26c4dfd03160e8223b99f1e3424b3914a", size = 36956, upload-time = "2026-10-04T22:29:02.663Z" },
 ]
 
 [[package]]
