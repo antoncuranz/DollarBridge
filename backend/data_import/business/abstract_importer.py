@@ -29,7 +29,7 @@ class AbstractImporter(ABC):
         pass
 
     def _process_payment(self, session: Session, account: Account, tx) -> Payment:
-        account_id = require_persisted_id(account.id, "Account")
+        account_id = require_persisted_id(account)
         args = self._make_transaction_args(tx, account_id)
         
         pending_payment = self.repository.get_pending_payment(session, account_id, args["date"], args["amount_usd"])

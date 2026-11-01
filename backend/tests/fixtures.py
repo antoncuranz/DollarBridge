@@ -7,19 +7,19 @@ from models import ExchangeRate
 ALICE_AUTH = {"X-Auth-Request-Preferred-Username": "alice"}
 BOB_AUTH = {"X-Auth-Request-Preferred-Username": "bob"}
 
-ALICE_USER = dict(id=1, name="alice", super_user=True)
-BOB_USER = dict(id=2, name="bob")
+ALICE_USER: dict[str, Any] = dict(id=1, name="alice", super_user=True)
+BOB_USER: dict[str, Any] = dict(id=2, name="bob")
 
-BANK_ACCOUNT_1 = dict(
+BANK_ACCOUNT_1: dict[str, Any] = dict(
     id=1, user_id=1, name="Test BankAccount 1", institution="Institution 1",
     import_id="import_test_bank_acc_1",
 )
 
-ACCOUNT_1 = dict(
+ACCOUNT_1: dict[str, Any] = dict(
     id=1, user_id=1, actual_id="actual_test_acc_1", name="Test Account 1", institution="Institution 1",
     import_id="import_test_acc_1", bank_account_id=1
 )
-ACCOUNT_2 = dict(
+ACCOUNT_2: dict[str, Any] = dict(
     id=2, user_id=1, actual_id="actual_test_acc_2", name="Test Account 2", institution="Institution 2",
     import_id="import_test_acc_2",
 )
@@ -111,11 +111,11 @@ TRANSACTIONS = [
     TX_1, TX_2, TX_3
 ]
 
-CREDIT_1 = dict(
+CREDIT_1: dict[str, Any] = dict(
     id=1, account_id=1, import_id="import_test_cr_1", date="2024-01-15", counterparty="Onlineshop", description="Refund",
     category="generic", amount_usd=1109
 )
-CREDIT_2 = dict(
+CREDIT_2: dict[str, Any] = dict(
     id=2, account_id=1, import_id="import_test_cr_2", date="2024-01-16", counterparty="Onlineshop", description="Refund",
     category="generic", amount_usd=109
 )
@@ -149,13 +149,13 @@ EXCHANGE_3: dict[str, Any] = dict(
 for exchange in [EXCHANGE_1, EXCHANGE_2, EXCHANGE_3]:
     exchange["amount_eur"] = round(Decimal(exchange["amount_usd"]) / exchange["exchange_rate"])
 
-EXCHANGE_PAYMENT_1 = dict(
+EXCHANGE_PAYMENT_1: dict[str, Any] = dict(
     exchange_id=1, payment_id=1, amount=PAYMENT_1["amount_usd"]
 )
-EXCHANGE_PAYMENT_2 = dict(
+EXCHANGE_PAYMENT_2: dict[str, Any] = dict(
     exchange_id=2, payment_id=1, amount=EXCHANGE_2["amount_usd"]
 )
-EXCHANGE_PAYMENT_3 = dict(
+EXCHANGE_PAYMENT_3: dict[str, Any] = dict(
     exchange_id=3, payment_id=1, amount=PAYMENT_1["amount_usd"]-EXCHANGE_2["amount_usd"]
 )
 
@@ -164,7 +164,7 @@ MASTERCARD_EXCHANGE_RATES = [  # 1-10.01.2024
 ]
 EXCHANGERATESIO_EXCHANGE_RATES = [er * 1.005 for er in MASTERCARD_EXCHANGE_RATES]  # TODO: use real data
 
-EXCHANGE_RATES = [
+EXCHANGE_RATES: list[dict[str, Any]] = [
     dict(
         date="2024-01-"+str(i+1).zfill(2), source=ExchangeRate.Source.MASTERCARD.value, exchange_rate=Decimal(er)
     ) for i, er in enumerate(MASTERCARD_EXCHANGE_RATES)
@@ -174,14 +174,14 @@ EXCHANGE_RATES = [
     ) for i, er in enumerate(EXCHANGERATESIO_EXCHANGE_RATES)
 ]
 
-PLAID_CONNECTION_1 = dict(
+PLAID_CONNECTION_1: dict[str, Any] = dict(
     id=1, user_id=1, name="Capital One", plaid_item_id="item-1", plaid_access_token="token-1"
 )
 
-PLAID_ACCOUNT_1 = dict(
+PLAID_ACCOUNT_1: dict[str, Any] = dict(
     id=1, name="Savor", connection_id=1, cursor="cursor-1", plaid_account_id="plaid-account-1"
 )
-PLAID_ACCOUNT_2 = dict(
+PLAID_ACCOUNT_2: dict[str, Any] = dict(
     id=2, name="Delta Gold", connection_id=1, cursor="cursor-2", plaid_account_id="plaid-account-2"
 )
 

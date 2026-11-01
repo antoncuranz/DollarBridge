@@ -97,7 +97,7 @@ class ActualService:
         if account.user.super_user:
             self.actual.create_transaction(account, self._create_actual_payment(payment, id))
         else:
-            payment_id = require_persisted_id(payment.id, "Payment")
+            payment_id = require_persisted_id(payment)
             transactions = self.repository.get_paid_transactions_by_payment(session, payment_id)
             self.actual.create_transaction_super_misc(super_user, self._create_actual_payment_misc(payment, transactions, id))
 

@@ -1,14 +1,18 @@
-name: Build and Push Frontend
+name: Build and Push Backend
 
 on:
   push:
     branches:
       - main
     paths:
-      - frontend/**
+      - 'backend/**'
 
 jobs:
+  checks:
+    uses: ./.github/workflows/backend-checks.yml
+
   build:
+    needs: checks
     runs-on: ubuntu-latest
 
     steps:
@@ -22,9 +26,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build and push frontend
+      - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
-          context: frontend
+          context: backend
           push: true
-          tags: ghcr.io/antoncuranz/money-tracking/frontend:latest
+          tags: ghcr.io/antoncuranz/money-tracking/backend:latest

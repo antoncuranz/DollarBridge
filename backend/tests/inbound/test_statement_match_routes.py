@@ -1,4 +1,5 @@
 import json
+import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,7 +17,7 @@ def make_transaction(id: int, account_id: int, status: int, amount_eur: int | No
         id=id,
         account_id=account_id,
         import_id=f"tx-{id}",
-        date=f"2024-01-{id:02d}",
+        date=datetime.date.fromisoformat(f"2024-01-{id:02d}"),
         counterparty=f"Counterparty {id}",
         description=f"Description {id}",
         category="category",
@@ -34,8 +35,8 @@ def setup(session: Session, override_statement_match_dependencies):
             User(**ALICE_USER),
             User(**BOB_USER),
             BankAccount(**BANK_ACCOUNT_1),
-            Account(**dict(id=1, user_id=1, actual_id="actual-1", name="Alice Account", institution="Bank", import_id="account-1", bank_account_id=1)),
-            Account(**dict(id=2, user_id=2, actual_id="actual-2", name="Bob Account", institution="Bank", import_id="account-2")),
+            Account.model_validate(dict(id=1, user_id=1, actual_id="actual-1", name="Alice Account", institution="Bank", import_id="account-1", bank_account_id=1)),
+            Account.model_validate(dict(id=2, user_id=2, actual_id="actual-2", name="Bob Account", institution="Bank", import_id="account-2")),
         ]
     )
 

@@ -23,9 +23,9 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     super_user: bool = False
-    actual_sync_id: str | None
-    actual_encryption_password: str | None
-    actual_misc_account: str | None
+    actual_sync_id: str | None = None
+    actual_encryption_password: str | None = None
+    actual_misc_account: str | None = None
 
 
 class PlaidAccount(SQLModel, table=True):
@@ -42,7 +42,7 @@ class PlaidConnection(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     user: User = Relationship()
-    name: str | None
+    name: str | None = None
     plaid_item_id: str
     plaid_access_token: str
     plaid_accounts: List[PlaidAccount] = Relationship(cascade_delete=True)
@@ -55,10 +55,10 @@ class BankAccount(SQLModel, table=True):
     accounts: List["Account"] = Relationship()
     name: str
     institution: str
-    icon: str | None
+    icon: str | None = None
     balance: int = 0
-    import_id: str | None  # TODO: remove once migrated to plaid
-    plaid_account_id: int | None = Field(foreign_key="plaidaccount.id", ondelete="SET NULL")
+    import_id: str | None = None  # TODO: remove once migrated to plaid
+    plaid_account_id: int | None = Field(default=None, foreign_key="plaidaccount.id", ondelete="SET NULL")
     plaid_account: PlaidAccount | None = Relationship()
 
 
@@ -66,31 +66,31 @@ class Account(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     user: User = Relationship()
-    bank_account_id: int | None = Field(foreign_key="bankaccount.id", ondelete="SET NULL")
+    bank_account_id: int | None = Field(default=None, foreign_key="bankaccount.id", ondelete="SET NULL")
     bank_account: BankAccount | None = Relationship(back_populates="accounts")
-    actual_id: str | None
-    import_id: str | None  # TODO: remove once migrated to plaid
-    plaid_account_id: int | None = Field(foreign_key="plaidaccount.id", ondelete="SET NULL")
+    actual_id: str | None = None
+    import_id: str | None = None  # TODO: remove once migrated to plaid
+    plaid_account_id: int | None = Field(default=None, foreign_key="plaidaccount.id", ondelete="SET NULL")
     plaid_account: PlaidAccount | None = Relationship()
     name: str
     institution: str
-    due_day: int | None
-    autopay_offset: int | None
-    icon: str | None
-    color: str | None
-    target_spend: int | None
+    due_day: int | None = None
+    autopay_offset: int | None = None
+    icon: str | None = None
+    color: str | None = None
+    target_spend: int | None = None
     active: bool = True
 
 
 class PaymentBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     account_id: int = Field(foreign_key="account.id")
-    import_id: str | None = Field(unique=True)
-    actual_id: str | None
+    import_id: str | None = Field(default=None, unique=True)
+    actual_id: str | None = None
     date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
-    category: str | None
+    category: str | None = None
     amount_usd: int
     status: int
 
@@ -111,7 +111,7 @@ class PaymentBase(SQLModel):
         PROCESSED = 3
 
 class Payment(PaymentBase, table=True):
-    amount_eur: int | None
+    amount_eur: int | None = None
     account: Account = Relationship()
     exchanges: List["ExchangePayment"] = Relationship(cascade_delete=True)
     transactions: List["Transaction"] = Relationship()
@@ -128,9 +128,9 @@ class Exchange(SQLModel, table=True):
     exchange_rate: Decimal = Field(decimal_places=8)
     amount_eur: int
     paid_eur: int
-    fees_eur: int | None
-    import_id: str | None = Field(unique=True)
-    actual_id: str | None = Field(unique=True)
+    fees_eur: int | None = None
+    import_id: str | None = Field(default=None, unique=True)
+    actual_id: str | None = Field(default=None, unique=True)
     cashback_transaction_id: int | None = Field(default=None, foreign_key="transaction.id", unique=True)
     payments: List["ExchangePayment"] = Relationship(cascade_delete=True)
 
@@ -146,17 +146,17 @@ class ExchangePayment(SQLModel, table=True):
 class TransactionBase(SQLModel):
     id: int | None = Field(default=None, primary_key=True)
     account_id: int = Field(foreign_key="account.id")
-    payment_id: int | None = Field(foreign_key="payment.id")
+    payment_id: int | None = Field(default=None, foreign_key="payment.id")
     import_id: str = Field(unique=True)
-    actual_id: str | None
+    actual_id: str | None = None
     date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
-    category: str | None
+    category: str | None = None
     amount_usd: int
-    amount_eur: int | None
+    amount_eur: int | None = None
     status: int
-    fees_and_risk_eur: int | None
+    fees_and_risk_eur: int | None = None
     ignore: bool | None = False
 
     @property
@@ -197,7 +197,7 @@ class Credit(SQLModel, table=True):
     date: datetime.date = Field(default_factory=datetime.date.today)
     counterparty: str
     description: str
-    category: str | None
+    category: str | None = None
     amount_usd: int
     transactions: List["CreditTransaction"] = Relationship()
 

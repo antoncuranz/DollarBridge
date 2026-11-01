@@ -3,6 +3,7 @@ from typing import List, Optional
 from sqlmodel import Session, col, select, true
 
 from models import Account, BankAccount, User
+from persistence import require_persisted_id
 
 
 class AccountRepository:
@@ -24,7 +25,8 @@ class AccountRepository:
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
                        autopay_offset: int | None, icon: str | None, color: str | None,
                        target_spend: int | None, active: bool = True) -> Account:
-        account = Account(user_id=user.id, bank_account_id=bank_account_id, actual_id=actual_id,
+        user_id = require_persisted_id(user)
+        account = Account(user_id=user_id, bank_account_id=bank_account_id, actual_id=actual_id,
                           plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
                           autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
                           active=active)
@@ -46,6 +48,7 @@ class AccountRepository:
         return session.exec(stmt).first()
 
     def create_bank_account(self, session: Session, user: User, name: str, institution: str, icon: str | None, plaid_account_id: int | None) -> BankAccount:
-        bank_account = BankAccount(user_id=user.id, name=name, institution=institution, icon=icon, plaid_account_id=plaid_account_id)
+        user_id = require_persisted_id(user)
+        bank_account = BankAccount(user_id=user_id, name=name, institution=institution, icon=icon, plaid_account_id=plaid_account_id)
         session.add(bank_account)
         return bank_account

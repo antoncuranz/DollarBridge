@@ -72,10 +72,10 @@ class PaymentService:
         else:
             transactions = self._guess_transactions_to_process(session, payment)
 
-        account_id = require_persisted_id(payment.account.id, "Account")
+        account_id = require_persisted_id(payment.account)
         actual_payment_id = None
         original_actual_ids = {
-            require_persisted_id(tx.id, "Transaction"): tx.actual_id for tx in transactions
+            require_persisted_id(tx): tx.actual_id for tx in transactions
         }
 
         try:
@@ -126,7 +126,7 @@ class PaymentService:
         session.commit()
 
         if super_user == payment.account.user:
-            account_id = require_persisted_id(payment.account.id, "Account")
+            account_id = require_persisted_id(payment.account)
             self.data_export.update_transactions(session, super_user, account_id, transactions)
 
         if payment.actual_id is not None:
@@ -150,7 +150,7 @@ class PaymentService:
         session.commit()
 
     def _guess_transactions_to_process(self, session: Session, payment: Payment):
-        account_id = require_persisted_id(payment.account.id, "Account")
+        account_id = require_persisted_id(payment.account)
         transactions = self.store.get_posted_transactions_by_account(session, account_id)
 
         process_tx = []
@@ -198,7 +198,7 @@ class PaymentService:
         if payment.amount_usd != tx_remaining_sum:
             raise Exception("Error: Payment amount does not match sum of transactions!")
 
-        payment_id = require_persisted_id(payment.id, "Payment")
+        payment_id = require_persisted_id(payment)
         exchange_payments = self.store.get_exchange_payments_by_payment(session, payment_id)
         amount_eur = self._calc_payment_amount_eur(exchange_payments)
 

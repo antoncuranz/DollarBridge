@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import NoResultFound
 
 from models import Account, Transaction, Credit, CreditTransaction, User, BankAccount
+from persistence import require_persisted_id
 from tests.fixtures import ACCOUNT_1, CREDIT_1, TX_1, TX_2, TX_3, CREDIT_2, ALICE_AUTH, ALICE_USER, \
     BANK_ACCOUNT_1
 
@@ -70,7 +71,7 @@ def test_update_credit_amount_larger_than_remaining_tx_400(session: Session, cli
     session.add(credit2)
     tx = Transaction(**TX_1)
     session.add(tx)
-    session.add(CreditTransaction(credit_id=credit2.id, transaction_id=tx.id, amount=credit2.amount_usd))
+    session.add(CreditTransaction(credit_id=require_persisted_id(credit2), transaction_id=require_persisted_id(tx), amount=credit2.amount_usd))
     session.commit()
 
     assert tx.amount_usd == credit.amount_usd
@@ -108,7 +109,7 @@ def test_update_credit_on_paid_transaction_400(session: Session, client: TestCli
     session.add(tx)
     tx.status_enum = Transaction.Status.PAID
     session.add(tx)
-    session.add(CreditTransaction(credit_id=credit.id, transaction_id=tx.id, amount=1))
+    session.add(CreditTransaction(credit_id=require_persisted_id(credit), transaction_id=require_persisted_id(tx), amount=1))
     session.commit()
 
     # Act
@@ -124,7 +125,7 @@ def test_update_credit_delete_credit_transaction(session: Session, client: TestC
     session.add(credit)
     tx = Transaction(**TX_1)
     session.add(tx)
-    session.add(CreditTransaction(credit_id=credit.id, transaction_id=tx.id, amount=1))
+    session.add(CreditTransaction(credit_id=require_persisted_id(credit), transaction_id=require_persisted_id(tx), amount=1))
     session.commit()
 
     # Act
@@ -143,7 +144,7 @@ def test_update_credit_reduce_amount(session: Session, client: TestClient):
     session.add(credit)
     tx = Transaction(**TX_1)
     session.add(tx)
-    session.add(CreditTransaction(credit_id=credit.id, transaction_id=tx.id, amount=credit.amount_usd))
+    session.add(CreditTransaction(credit_id=require_persisted_id(credit), transaction_id=require_persisted_id(tx), amount=credit.amount_usd))
     session.commit()
 
     assert tx.amount_usd == credit.amount_usd
@@ -165,7 +166,7 @@ def test_get_usable_credits(session: Session, client: TestClient):
     tx.status_enum = Transaction.Status.PAID
     tx.amount_usd = credit.amount_usd
     session.add(tx)
-    session.add(CreditTransaction(credit_id=credit.id, transaction_id=tx.id, amount=credit.amount_usd))
+    session.add(CreditTransaction(credit_id=require_persisted_id(credit), transaction_id=require_persisted_id(tx), amount=credit.amount_usd))
     session.commit()
 
     assert tx.amount_usd == credit.amount_usd

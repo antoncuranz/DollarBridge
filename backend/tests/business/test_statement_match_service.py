@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from typing import cast
 
@@ -60,7 +61,7 @@ def test_match_statement_preserves_one_result_per_transaction(session: Session):
             id=1,
             account_id=1,
             import_id="tx-1",
-            date="2024-01-01",
+            date=datetime.date.fromisoformat("2024-01-01"),
             counterparty="Merchant",
             description="Card purchase 1",
             category="category",
@@ -73,7 +74,7 @@ def test_match_statement_preserves_one_result_per_transaction(session: Session):
             id=2,
             account_id=1,
             import_id="tx-2",
-            date="2024-01-02",
+            date=datetime.date.fromisoformat("2024-01-02"),
             counterparty="Merchant",
             description="Card purchase 2",
             category="category",
@@ -142,7 +143,7 @@ def test_match_statement_accepts_integer_cent_amounts(session: Session):
             id=1,
             account_id=1,
             import_id="tx-1",
-            date="2024-01-01",
+            date=datetime.date.fromisoformat("2024-01-01"),
             counterparty="Merchant",
             description="Card purchase",
             category="category",
@@ -176,7 +177,7 @@ def test_match_statement_rejects_decimal_eur_amounts(session: Session):
             id=1,
             account_id=1,
             import_id="tx-1",
-            date="2024-01-01",
+            date=datetime.date.fromisoformat("2024-01-01"),
             counterparty="Merchant",
             description="Card purchase",
             category="category",
@@ -211,7 +212,7 @@ def test_match_statement_rejects_out_of_range_confidence(session: Session):
             id=1,
             account_id=1,
             import_id="tx-1",
-            date="2024-01-01",
+            date=datetime.date.fromisoformat("2024-01-01"),
             counterparty="Merchant",
             description="Card purchase",
             category="category",

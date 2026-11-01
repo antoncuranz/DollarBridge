@@ -5,6 +5,7 @@ from sqlmodel import Session, col, select, func, true
 
 from models import Account, Transaction, Credit, Payment, PlaidAccount, PlaidConnection
 from models import User, BankAccount
+from persistence import require_persisted_id
 
 
 class DataImportRepository:
@@ -29,15 +30,16 @@ class DataImportRepository:
         return session.exec(stmt).first()
     
     def create_pending_payment(self, session: Session, account: Account, statement_date: datetime.date, last_statement_date: datetime.date, due_date: datetime.date) -> Payment:
+        account_id = require_persisted_id(account)
         tx_sum = select(func.sum(Transaction.amount_usd)).where(
-            (Transaction.account_id == account.id) & (Transaction.status == Transaction.Status.POSTED.value) & (Transaction.date <= statement_date) & (Transaction.date > last_statement_date)
+            (Transaction.account_id == account_id) & (Transaction.status == Transaction.Status.POSTED.value) & (Transaction.date <= statement_date) & (Transaction.date > last_statement_date)
         )
         credit_sum = select(func.sum(Credit.amount_usd)).where(
-            (Credit.account_id == account.id) & (Credit.date <= statement_date) & (Credit.date > last_statement_date)
+            (Credit.account_id == account_id) & (Credit.date <= statement_date) & (Credit.date > last_statement_date)
         )
         amount_usd = (session.exec(tx_sum).first() or 0) - (session.exec(credit_sum).first() or 0)
         
-        payment = Payment(account_id=account.id, date=due_date, counterparty=account.institution, description="Upcoming Payment", amount_usd=amount_usd, status=Payment.Status.PENDING.value)
+        payment = Payment(account_id=account_id, date=due_date, counterparty=account.institution, description="Upcoming Payment", amount_usd=amount_usd, status=Payment.Status.PENDING.value)
         session.add(payment)
         return payment
 
@@ -87,7 +89,8 @@ class DataImportRepository:
         return model, created
     
     def create_plaid_connection(self, session: Session, user: User, plaid_item_id: str, plaid_access_token: str) -> PlaidConnection:
-        connection = PlaidConnection(user_id=user.id, plaid_item_id=plaid_item_id, plaid_access_token=plaid_access_token)
+        user_id = require_persisted_id(user)
+        connection = PlaidConnection(user_id=user_id, plaid_item_id=plaid_item_id, plaid_access_token=plaid_access_token)
         session.add(connection)
         return connection
     

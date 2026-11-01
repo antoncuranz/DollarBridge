@@ -51,7 +51,7 @@ class TransactionService:
         session.commit()
 
         if transaction.actual_id is not None:
-            account_id = require_persisted_id(transaction.account.id, "Account")
+            account_id = require_persisted_id(transaction.account)
             self.data_export.update_transaction(session, user, account_id, transaction)
 
     def mark_cashback(self, session: Session, user: User, tx_id: int):
@@ -62,7 +62,7 @@ class TransactionService:
         if transaction.status_enum != Transaction.Status.POSTED or transaction.amount_usd <= 0:
             raise HTTPException(status_code=400, detail="Only posted transactions with a positive USD amount can be marked as cashback")
 
-        transaction_id = require_persisted_id(transaction.id, "Transaction")
+        transaction_id = require_persisted_id(transaction)
         if self.store.get_cashback_exchange(session, transaction_id) is not None:
             return
 
@@ -87,7 +87,7 @@ class TransactionService:
             raise
 
         if amount_changed and transaction.actual_id is not None:
-            account_id = require_persisted_id(transaction.account.id, "Account")
+            account_id = require_persisted_id(transaction.account)
             self.data_export.update_transaction(session, user, account_id, transaction)
 
     def undo_cashback(self, session: Session, user: User, tx_id: int):
@@ -95,11 +95,11 @@ class TransactionService:
         if not transaction:
             raise HTTPException(status_code=404)
 
-        transaction_id = require_persisted_id(transaction.id, "Transaction")
+        transaction_id = require_persisted_id(transaction)
         exchange = self.store.get_cashback_exchange(session, transaction_id)
         if not exchange:
             raise HTTPException(status_code=400, detail="Transaction is not marked as cashback")
-        exchange_id = require_persisted_id(exchange.id, "Exchange")
+        exchange_id = require_persisted_id(exchange)
         if self.store.get_exchange_payments_by_exchange(session, exchange_id):
             raise HTTPException(status_code=409, detail="Cashback exchange is still assigned to payments")
 
@@ -113,5 +113,5 @@ class TransactionService:
             raise
 
         if transaction.actual_id is not None:
-            account_id = require_persisted_id(transaction.account.id, "Account")
+            account_id = require_persisted_id(transaction.account)
             self.data_export.update_transaction(session, user, account_id, transaction)
