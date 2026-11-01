@@ -1,4 +1,11 @@
-def require_persisted_id(value: int | None, entity: str) -> int:
-    if value is None:
-        raise ValueError(f"{entity} has no persisted ID")
-    return value
+from typing import Protocol
+
+
+class ModelWithOptionalId(Protocol):
+    id: int | None
+
+
+def require_persisted_id(model: ModelWithOptionalId) -> int:
+    if model.id is None:
+        raise ValueError(f"{type(model).__name__} has no persisted ID")
+    return model.id

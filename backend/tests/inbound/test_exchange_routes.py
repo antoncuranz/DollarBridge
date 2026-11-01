@@ -66,7 +66,7 @@ def test_delete_assigned_exchange_500(session: Session, client: TestClient):
     session.add(payment)
     exchange = Exchange(**EXCHANGE_1)
     session.add(exchange)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=1))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange), payment_id=require_persisted_id(payment), amount=1))
     session.commit()
 
     # Act
@@ -120,7 +120,7 @@ def test_update_exchange_amount_larger_than_remaining_payment_500(session: Sessi
     session.add(exchange2)
     payment = Payment(**PAYMENT_1)
     session.add(payment)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange2.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=exchange2.amount_usd))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange2), payment_id=require_persisted_id(payment), amount=exchange2.amount_usd))
     session.commit()
 
     assert payment.amount_usd == exchange.amount_usd
@@ -157,7 +157,7 @@ def test_update_exchange_on_processed_payment_404(session: Session, client: Test
     payment = Payment(**PAYMENT_1)
     payment.status_enum = Payment.Status.PROCESSED
     session.add(payment)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=1))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange), payment_id=require_persisted_id(payment), amount=1))
     session.commit()
 
     # Act
@@ -173,7 +173,7 @@ def test_update_exchange_delete_exchange_payment(session: Session, client: TestC
     session.add(exchange)
     payment = Payment(**PAYMENT_1)
     session.add(payment)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=1))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange), payment_id=require_persisted_id(payment), amount=1))
     session.commit()
 
     # Act
@@ -193,7 +193,7 @@ def test_update_exchange_reduce_amount(session: Session, client: TestClient):
     session.add(exchange)
     payment = Payment(**PAYMENT_1)
     session.add(payment)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=exchange.amount_usd))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange), payment_id=require_persisted_id(payment), amount=exchange.amount_usd))
     session.commit()
 
     assert payment.amount_usd == exchange.amount_usd
@@ -212,7 +212,7 @@ def test_get_usable_exchanges(session: Session, client: TestClient):
     payment = Payment(**PAYMENT_1)
     payment.status_enum = Payment.Status.PROCESSED
     session.add(payment)
-    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange.id, "Exchange"), payment_id=require_persisted_id(payment.id, "Payment"), amount=exchange.amount_usd))
+    session.add(ExchangePayment(exchange_id=require_persisted_id(exchange), payment_id=require_persisted_id(payment), amount=exchange.amount_usd))
     assert payment.amount_usd == exchange.amount_usd
 
     exchange2 = Exchange(**EXCHANGE_2)

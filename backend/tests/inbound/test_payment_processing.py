@@ -395,7 +395,7 @@ def _setup_tables(session: Session, transactions, credits=[], exchange_rate=1.0)
             description="description", category="category", amount_usd=credit["amount_usd"]
         )
         session.add(model)
-        session.add(CreditTransaction(credit_id=require_persisted_id(model.id, "Credit"), transaction_id=credit["applied_to"], amount=credit["amount_usd"]))
+        session.add(CreditTransaction(credit_id=require_persisted_id(model), transaction_id=credit["applied_to"], amount=credit["amount_usd"]))
 
     sum_usd = sum(tx["amount_usd"] for tx in transactions) - sum(credit["amount_usd"] for credit in credits)
 

@@ -28,7 +28,7 @@ class BalanceService:
 
     def calc_exchange_remaining(self, session: Session, exchange: Exchange, include_pending=False, include_posted=False) -> int:
         balance = exchange.amount_usd
-        query = self.store.get_exchange_payments_by_exchange(session, require_persisted_id(exchange.id, "Exchange"))
+        query = self.store.get_exchange_payments_by_exchange(session, require_persisted_id(exchange))
 
         for exchange_payment in query:
             status = exchange_payment.payment.status_enum
@@ -43,7 +43,7 @@ class BalanceService:
     def calc_credit_remaining(self, session: Session, credit: Credit) -> int:
         balance = credit.amount_usd
 
-        query = self.store.get_credit_transactions_by_credit(session, require_persisted_id(credit.id, "Credit"))
+        query = self.store.get_credit_transactions_by_credit(session, require_persisted_id(credit))
 
         for credit_transaction in query:
             balance -= credit_transaction.amount
@@ -56,7 +56,7 @@ class BalanceService:
     def calc_transaction_remaining(self, session: Session, tx: Transaction) -> int:
         balance = tx.amount_usd
 
-        query = self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx.id, "Transaction"))
+        query = self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx))
 
         for credit_transaction in query:
             balance -= credit_transaction.amount
@@ -69,7 +69,7 @@ class BalanceService:
     def calc_payment_remaining(self, session: Session, payment: Payment) -> int:
         balance = payment.amount_usd
 
-        query = self.store.get_exchange_payments_by_payment(session, require_persisted_id(payment.id, "Payment"))
+        query = self.store.get_exchange_payments_by_payment(session, require_persisted_id(payment))
 
         for exchange_payment in query:
             balance -= exchange_payment.amount
@@ -83,7 +83,7 @@ class BalanceService:
         result = {}
         accounts = self.store.get_all_accounts(session) if user.super_user else self.store.get_accounts_of_user(session, user)
         for account in accounts:
-            account_id = require_persisted_id(account.id, "Account")
+            account_id = require_persisted_id(account)
             posted_tx = self.store.get_posted_transaction_amount(session, account_id)
             posted_credits = self.store.get_posted_credit_amount(session, account_id)
             posted_payments = self.store.get_posted_payment_amount(session, account_id)
@@ -106,7 +106,7 @@ class BalanceService:
         balance = 0
         for tx in transactions:
             amount = tx.amount_usd
-            for ct in self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx.id, "Transaction")):
+            for ct in self.store.get_credit_transactions_by_transaction(session, require_persisted_id(tx)):
                 amount -= ct.amount
 
             balance += amount

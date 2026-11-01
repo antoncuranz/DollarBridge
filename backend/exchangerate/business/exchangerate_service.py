@@ -21,7 +21,7 @@ class ExchangeRateService:
         self.repository = repository
         
     def fetch_exchange_rates(self, session: Session, account: Account, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD):
-        account_id = require_persisted_id(account.id, "Account")
+        account_id = require_persisted_id(account)
         transactions = self.repository.get_transactions_without_eur_amount(session, account_id)
         [self.get_exchange_rate(session, date, source) for date in set([tx.date for tx in transactions])]
 

@@ -30,7 +30,7 @@ class DataImportRepository:
         return session.exec(stmt).first()
     
     def create_pending_payment(self, session: Session, account: Account, statement_date: datetime.date, last_statement_date: datetime.date, due_date: datetime.date) -> Payment:
-        account_id = require_persisted_id(account.id, "Account")
+        account_id = require_persisted_id(account)
         tx_sum = select(func.sum(Transaction.amount_usd)).where(
             (Transaction.account_id == account_id) & (Transaction.status == Transaction.Status.POSTED.value) & (Transaction.date <= statement_date) & (Transaction.date > last_statement_date)
         )
@@ -89,7 +89,7 @@ class DataImportRepository:
         return model, created
     
     def create_plaid_connection(self, session: Session, user: User, plaid_item_id: str, plaid_access_token: str) -> PlaidConnection:
-        user_id = require_persisted_id(user.id, "User")
+        user_id = require_persisted_id(user)
         connection = PlaidConnection(user_id=user_id, plaid_item_id=plaid_item_id, plaid_access_token=plaid_access_token)
         session.add(connection)
         return connection

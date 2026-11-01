@@ -131,7 +131,7 @@ class StatementMatchService:
 
     def _to_candidate_payload(self, transaction: Transaction) -> CandidateTransaction:
         return CandidateTransaction(
-            transaction_id=require_persisted_id(transaction.id, "Transaction"),
+            transaction_id=require_persisted_id(transaction),
             date=transaction.date.isoformat(),
             amount_usd=transaction.amount_usd,
             counterparty=transaction.counterparty,
@@ -232,7 +232,7 @@ class StatementMatchService:
 
         enriched_results = []
         for transaction in transactions:
-            transaction_id = require_persisted_id(transaction.id, "Transaction")
+            transaction_id = require_persisted_id(transaction)
             guessed_amount_eur = self.exchangerate.guess_amount_eur(session, transaction)
             result = results_by_id[transaction_id]
             enriched_results.append(
