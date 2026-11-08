@@ -668,14 +668,14 @@ wheels = [
 
 [[package]]
 name = "ibind"
-version = "0.2.2"
+version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "requests" },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/3c/10807a17f94a9d7891707c79029ba0da358fb2ae19cdaaede16c37f11acf/ibind-0.2.2.tar.gz", hash = "sha256:91351290bcffa9aa6c1018a58146cf66dfe8835c239b8228e7b2bf34ef37e697", size = 156588, upload-time = "2026-10-06T11:21:35.554Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/51/ab34e07d80dedee9036f586cc4d10085c026fd3d903fbf5c28ae185164cd/ibind-0.2.3.tar.gz", hash = "sha256:3fa7ae921981d075162a4b184b9d41e40c40a438994669dccd426eefa753a613", size = 156980, upload-time = "2026-11-08T12:05:22.156Z" }
 
 [[package]]
 name = "idna"
@@ -898,7 +898,7 @@ requires-dist = [
     { name = "curl-cffi", specifier = "==0.17.0" },
     { name = "fastapi", extras = ["standard"], specifier = "==0.162.2" },
     { name = "gql", specifier = "==4.4.0" },
-    { name = "ibind", specifier = "==0.2.2" },
+    { name = "ibind", specifier = "==0.2.3" },
     { name = "openai", specifier = "==3.42.1" },
     { name = "paho-mqtt", specifier = "==2.1.0" },
     { name = "pebble", specifier = "==5.2.3" },
