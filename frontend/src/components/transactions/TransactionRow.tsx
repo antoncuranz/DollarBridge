@@ -23,12 +23,15 @@ export function TransactionRow({
   account,
   superUser,
   onApplyCredit,
+  creditApplied,
 }: {
   transaction: Transaction
   account?: Account
   superUser: boolean
   /** set in apply-credit mode: the row offers the credit instead of the EUR field */
   onApplyCredit?: () => void
+  /** in apply-credit mode: the selected credit is already on this transaction */
+  creditApplied?: boolean
 }) {
   const hasDraft = useStore(state => transaction.id in state.drafts)
   const draft = useStore(state => state.drafts[transaction.id])
@@ -91,7 +94,7 @@ export function TransactionRow({
         title={transaction.counterparty}
         description={description}
         meta={formatUsd(transaction.amount_usd - credits)}
-        tone={selectable ? "selectable" : "default"}
+        tone={creditApplied ? "selectable" : "default"}
         pending={transaction.status === Status.PENDING}
         struck={transaction.ignore === true}
         columns={

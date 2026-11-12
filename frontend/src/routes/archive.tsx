@@ -118,10 +118,10 @@ function ArchivePage() {
   )
 
   const monthNavigation = (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
       <Button
-        variant="ghost"
-        size="icon-sm"
+        variant="secondary"
+        size="icon"
         aria-label="Previous month"
         onClick={() => goToMonth(-1)}
       >
@@ -131,8 +131,8 @@ function ArchivePage() {
         {formatMonth(month)}
       </span>
       <Button
-        variant="ghost"
-        size="icon-sm"
+        variant="secondary"
+        size="icon"
         aria-label="Next month"
         disabled={monthKey(month) >= monthKey(new Date())}
         onClick={() => goToMonth(1)}

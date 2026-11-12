@@ -1,17 +1,21 @@
 import { format } from "date-fns"
 import { Check } from "lucide-react"
-import { useId, useState } from "react"
+import { useState } from "react"
 
-import { AmountField, ComputedField, Dialog, Field, FieldRow } from "./Dialog"
+import {
+  AmountField,
+  ComputedField,
+  DateField,
+  Dialog,
+  FieldRow,
+} from "./Dialog"
 import { useCreateExchange } from "@/api/mutations"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { exchangeAmountEur } from "@/lib/derive"
 import { formatAmount, formatGrouped } from "@/lib/money"
 
 /** Adds a USD exchange. EUR amount and fees are derived and shown read-only. */
 export function ExchangeDialog({ onClose }: { onClose: () => void }) {
-  const dateId = useId()
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"))
   const [amountUsd, setAmountUsd] = useState<number | null>(null)
   const [rate, setRate] = useState<number | null>(null)
@@ -55,14 +59,7 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
       }
     >
       <FieldRow>
-        <Field label="Date" htmlFor={dateId}>
-          <Input
-            id={dateId}
-            type="date"
-            value={date}
-            onChange={event => setDate(event.target.value)}
-          />
-        </Field>
+        <DateField label="Date" value={date} onChange={setDate} />
         <AmountField
           label="Amount (USD)"
           format="usd"

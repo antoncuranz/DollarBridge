@@ -218,6 +218,11 @@ function ExchangesPage() {
     const remainder = paymentRemainder(payment)
     const pending = payment.status === Status.PENDING
     const fullyCovered = remainder === 0
+    // in apply mode: the selected exchange already covers part of this payment
+    const exchangeApplied =
+      selected != null &&
+      payment.exchanges.some(ep => ep.exchange_id === selected.id)
+    const canApply = selected != null && (!fullyCovered || exchangeApplied)
     const eur =
       (fullyCovered ? payment.amount_eur_with_fx : null) ??
       payment.amount_eur_without_fx
@@ -247,7 +252,7 @@ function ExchangesPage() {
       >
         <Row
           swatch={<Swatch account={account} />}
-          tone={selected && !fullyCovered ? "selectable" : "default"}
+          tone={exchangeApplied ? "selectable" : "default"}
           pending={pending}
           title={payment.counterparty}
           description={`Due ${formatShortDay(payment.date)} · ${state}`}
@@ -271,7 +276,7 @@ function ExchangesPage() {
             )
           }
           action={
-            !user.super_user ? undefined : selected && !fullyCovered ? (
+            !user.super_user ? undefined : canApply ? (
               <Button
                 variant="accent"
                 size="sm"

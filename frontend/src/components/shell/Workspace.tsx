@@ -22,7 +22,7 @@ export function Workspace({
   children: ReactNode
 }) {
   return (
-    <div className="flex min-h-0 flex-1 overflow-clip bg-card md:rounded-pane md:border md:shadow-pane">
+    <div className="flex min-h-0 flex-1 overflow-clip bg-card md:rounded-[1.75rem] md:border md:shadow-pane">
       <aside className="no-scrollbar hidden w-80 shrink-0 flex-col gap-1.5 overflow-y-auto border-r px-3 pt-2 pb-4 md:flex">
         {sidebar}
       </aside>
@@ -55,20 +55,24 @@ export function ListHeader({
   children?: ReactNode
 }) {
   return (
-    <div className="list-header-fade pointer-events-none absolute inset-x-0 top-0 hidden h-14 items-center gap-2.5 py-2 pr-2 pl-5 md:flex">
-      {leading && <div className="pointer-events-auto -ml-3">{leading}</div>}
-      <div className="flex min-w-0 flex-1 items-baseline gap-2 whitespace-nowrap">
-        <h2 className="truncate text-lg leading-[26px] font-semibold">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="truncate text-sm leading-5 text-muted-foreground">
-            {subtitle}
-          </p>
-        )}
-      </div>
-      <div className="pointer-events-auto flex shrink-0 items-center gap-2">
-        {children}
+    <div className="absolute top-0 right-0 left-0 z-20 hidden md:block">
+      <div className="pane-header-blur" />
+      <div className="relative flex flex-row items-center gap-2 p-2">
+        {leading}
+        <div
+          className={cn(
+            "flex min-w-0 grow items-baseline gap-2 whitespace-nowrap",
+            !leading && "ml-3",
+          )}
+        >
+          <h2 className="truncate text-lg leading-10 font-semibold">{title}</h2>
+          {subtitle && (
+            <p className="truncate text-sm leading-5 text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
       </div>
     </div>
   )

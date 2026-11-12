@@ -77,11 +77,10 @@ export function Row({
     <div
       onContextMenu={onContextMenu}
       className={cn(
-        "redactable shrink-0 rounded-2xl shadow-row md:rounded-row",
+        "redactable shrink-0 rounded-2xl md:rounded-row",
+        !(pending && tone === "default") && "shadow-row",
         tones[tone],
-        pending &&
-          tone === "default" &&
-          "border-dashed border-muted-foreground/60",
+        pending && tone === "default" && "border-dashed",
         dimmed && "opacity-50",
         className,
       )}

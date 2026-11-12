@@ -203,8 +203,8 @@ function TransactionsPage() {
           : `${missingCount} missing EUR amounts`
       }
     >
-      {accountActions}
       {missingSwitch}
+      {accountActions}
     </ListHeader>
   )
 
@@ -270,8 +270,8 @@ function TransactionsPage() {
           </Button>
         ) : (
           <>
-            {accountActions}
             {missingSwitch}
+            {accountActions}
           </>
         )}
       </MobileActions>
@@ -306,9 +306,7 @@ function TransactionsPage() {
             first
             label="Open credits"
             info={
-              selectedCredit
-                ? undefined
-                : `${visibleCredits.length} · ${formatUsd(creditTotal)} to apply`
+              selectedCredit ? undefined : `${formatUsd(creditTotal)} to apply`
             }
           />
           <Rows>
@@ -330,17 +328,11 @@ function TransactionsPage() {
       )}
 
       {days.map((day, index) => {
-        const missing = day.items.filter(isMissing).length
         return (
           <div key={day.key} className="flex flex-col">
             <GroupSeparator
               first={index === 0 && visibleCredits.length === 0}
               label={formatDay(day.key)}
-              info={
-                !selectedCredit && missing > 0
-                  ? `${missing} missing`
-                  : undefined
-              }
             />
             <Rows>
               {day.items.map(tx => (
@@ -351,6 +343,10 @@ function TransactionsPage() {
                   superUser={user.super_user}
                   onApplyCredit={
                     selectedCredit ? () => setApplyTo(tx) : undefined
+                  }
+                  creditApplied={
+                    selectedCredit != null &&
+                    tx.credits.some(ct => ct.credit_id === selectedCredit.id)
                   }
                 />
               ))}

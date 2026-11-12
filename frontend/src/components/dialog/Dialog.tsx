@@ -1,3 +1,5 @@
+import { format, parseISO } from "date-fns"
+import { ChevronDown } from "lucide-react"
 import { useEffect, useId, useState } from "react"
 import type { ReactNode } from "react"
 
@@ -8,7 +10,14 @@ import {
   Dialog as DialogRoot,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
 import { fieldClassName } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverPositioner,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { formatAmount, formatGrouped, parseAmount } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -222,6 +231,53 @@ export function ComputedField({
         {prefix && <span>{prefix}</span>}
         <span className="flex-1 truncate">{children}</span>
       </div>
+    </Field>
+  )
+}
+
+/** Date as "yyyy-MM-dd", picked from a calendar popover. */
+export function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  const id = useId()
+  const [open, setOpen] = useState(false)
+  const date = value ? parseISO(value) : undefined
+
+  return (
+    <Field label={label} htmlFor={id}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          id={id}
+          className={cn(
+            fieldClassName,
+            "cursor-pointer justify-between text-left select-none hover:bg-secondary-hover active:scale-[0.98]",
+            !date && "text-placeholder",
+          )}
+        >
+          {date ? format(date, "d MMM yyyy") : "Pick a date"}
+          <ChevronDown className="size-4 text-muted-foreground" />
+        </PopoverTrigger>
+        <PopoverPositioner align="start">
+          <PopoverContent>
+            <Calendar
+              mode="single"
+              required
+              selected={date}
+              defaultMonth={date}
+              onSelect={selected => {
+                onChange(format(selected, "yyyy-MM-dd"))
+                setOpen(false)
+              }}
+            />
+          </PopoverContent>
+        </PopoverPositioner>
+      </Popover>
     </Field>
   )
 }

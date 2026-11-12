@@ -58,7 +58,11 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
-      className={cn(fieldClassName, "justify-between text-left", className)}
+      className={cn(
+        fieldClassName,
+        "cursor-pointer justify-between text-left select-none hover:bg-secondary-hover active:scale-[0.98]",
+        className,
+      )}
       {...props}
     >
       {children}
