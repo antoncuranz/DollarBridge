@@ -17,6 +17,11 @@ class DataExportFacade:
     def update_transactions(self, session: Session, user: User, account_id: int, transactions: List[Transaction] | None = None):
         self.actual_service.update_transactions(session, user, account_id, transactions)
 
+    def try_update_transactions(self, session: Session, user: User, account_id: int,
+                                transactions: List[Transaction]) -> List[int]:
+        """Updates the transactions in Actual and returns the ids of those that failed."""
+        return self.actual_service.try_update_transactions(session, user, account_id, transactions)
+
     def update_transaction(self, session: Session, user: User, account_id: int, transaction: Transaction):
         self.actual_service.update_transaction(session, user, account_id, transaction)
 

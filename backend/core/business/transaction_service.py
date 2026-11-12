@@ -1,14 +1,25 @@
+import datetime
 from decimal import Decimal
 from typing import Annotated, List
 
 from fastapi import Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, SQLModel
 
 from core.dataaccess.store import Store
 from data_export.facade import DataExportFacade
 from exchangerate.facade import ExchangeRateFacade
 from models import Transaction, User, TransactionWithGuessedAmount
 from persistence import require_persisted_id
+
+
+class TransactionAmount(SQLModel):
+    id: int
+    amount_eur: int | None = None
+
+
+class TransactionAmountsResult(SQLModel):
+    saved: List[int]
+    actual_failed: List[int]
 
 
 class TransactionService:
@@ -19,8 +30,9 @@ class TransactionService:
         self.data_export = data_export
         self.exchangerate = exchangerate
 
-    def get_transactions_with_guessed_amount(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None) -> List[TransactionWithGuessedAmount]:
-        transactions = self.store.get_transactions(session, user, account_id, paid)
+    def get_transactions_with_guessed_amount(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None,
+                                             paid_from: datetime.date | None = None, paid_to: datetime.date | None = None) -> List[TransactionWithGuessedAmount]:
+        transactions = self.store.get_transactions(session, user, account_id, paid, paid_from, paid_to)
         cashback_exchange_ids = self.store.get_cashback_exchange_ids(
             session, [transaction.id for transaction in transactions if transaction.id is not None]
         )
@@ -53,6 +65,36 @@ class TransactionService:
         if transaction.actual_id is not None:
             account_id = require_persisted_id(transaction.account)
             self.data_export.update_transaction(session, user, account_id, transaction)
+
+    def update_transaction_amounts(self, session: Session, user: User,
+                                   amounts: List[TransactionAmount]) -> TransactionAmountsResult:
+        """Saves all amounts in one database transaction, then syncs them to Actual.
+
+        The Actual sync is not part of the atomic save: transactions whose sync failed are
+        reported in actual_failed, their amounts are saved nonetheless."""
+        amount_by_id = {amount.id: amount.amount_eur for amount in amounts}
+        transactions = self.store.get_transactions_by_ids(session, list(amount_by_id.keys()))
+
+        if len(transactions) != len(amount_by_id):
+            raise HTTPException(status_code=404)
+        if not user.super_user and any(tx.account.user_id != user.id for tx in transactions):
+            raise HTTPException(status_code=404)
+
+        for transaction in transactions:
+            transaction.amount_eur = amount_by_id[require_persisted_id(transaction)]
+            session.add(transaction)
+        session.commit()
+
+        by_account: dict[int, List[Transaction]] = {}
+        for transaction in transactions:
+            if transaction.actual_id is not None:
+                by_account.setdefault(transaction.account_id, []).append(transaction)
+
+        actual_failed: List[int] = []
+        for account_id, account_transactions in by_account.items():
+            actual_failed += self.data_export.try_update_transactions(session, user, account_id, account_transactions)
+
+        return TransactionAmountsResult(saved=sorted(amount_by_id.keys()), actual_failed=sorted(actual_failed))
 
     def mark_cashback(self, session: Session, user: User, tx_id: int):
         transaction = self.store.get_transaction(session, user, tx_id)

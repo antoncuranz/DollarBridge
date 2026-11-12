@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 from fastapi import Depends
 from sqlmodel import Session
@@ -148,8 +149,13 @@ class BalanceService:
         else:
             return "negative"
 
-    def get_fees_and_risk_eur(self, session: Session) -> int:
-        return self.store.get_fees_and_risk_eur(session)
+    def get_fees_and_risk_eur(self, session: Session, paid_from: datetime.date | None = None,
+                              paid_to: datetime.date | None = None) -> int:
+        return self.store.get_fees_and_risk_eur(session, paid_from, paid_to)
+
+    def get_paid_amount_eur(self, session: Session, paid_from: datetime.date | None = None,
+                            paid_to: datetime.date | None = None) -> int:
+        return self.store.get_paid_amount_eur(session, paid_from, paid_to)
 
     def get_avg_exchange_rate(self, session: Session) -> Decimal:
         transactions = self.store.get_all_posted_transactions(session) + self.store.get_all_pending_transactions(session)

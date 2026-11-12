@@ -2,11 +2,11 @@ import datetime
 from decimal import Decimal
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlmodel import SQLModel, Session
 
 from auth import get_current_user, require_super_user
-from core.business.transaction_service import TransactionService
+from core.business.transaction_service import TransactionService, TransactionAmount, TransactionAmountsResult
 from models import User, get_session
 
 router = APIRouter(prefix="/api/transactions", tags=["Transactions"])
@@ -40,8 +40,19 @@ class TransactionTO(SQLModel):
 def get_transactions(user: Annotated[User, Depends(get_current_user)],
                      session: Annotated[Session, Depends(get_session)],
                      transaction_service: Annotated[TransactionService, Depends()],
-                     account: int | None = None, paid: bool | None = None):
-    return transaction_service.get_transactions_with_guessed_amount(session, user, account, paid)
+                     account: int | None = None, paid: bool | None = None,
+                     paid_from: Annotated[datetime.date | None, Query(alias="from")] = None,
+                     paid_to: Annotated[datetime.date | None, Query(alias="to")] = None):
+    """The optional from/to range refers to the date of the settling payment (archive)."""
+    return transaction_service.get_transactions_with_guessed_amount(session, user, account, paid, paid_from, paid_to)
+
+
+@router.put("/amounts", response_model=TransactionAmountsResult)
+def update_transaction_amounts(user: Annotated[User, Depends(get_current_user)],
+                               session: Annotated[Session, Depends(get_session)],
+                               transaction_service: Annotated[TransactionService, Depends()],
+                               amounts: List[TransactionAmount]):
+    return transaction_service.update_transaction_amounts(session, user, amounts)
 
 
 @router.put("/{tx_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,7 @@
 import datetime
 from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import SQLModel, Session
 
 from auth import get_current_user
@@ -35,8 +35,10 @@ class PaymentTO(SQLModel):
 def get_payments(user: Annotated[User, Depends(get_current_user)],
                  session: Annotated[Session, Depends(get_session)],
                  payment_service: Annotated[PaymentService, Depends()],
-                 account: int | None = None, processed: bool | None = None):
-    return payment_service.get_payments(session, user, account, processed)
+                 account: int | None = None, processed: bool | None = None,
+                 date_from: Annotated[datetime.date | None, Query(alias="from")] = None,
+                 date_to: Annotated[datetime.date | None, Query(alias="to")] = None):
+    return payment_service.get_payments(session, user, account, processed, date_from, date_to)
 
 
 @router.post("/{payment_id}/process", status_code=status.HTTP_204_NO_CONTENT)

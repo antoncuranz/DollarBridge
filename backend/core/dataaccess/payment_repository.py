@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 
 from sqlmodel import Session, col, select, func, true
@@ -10,7 +11,8 @@ class PaymentRepository:
         stmt = select(Payment).where(Payment.id == payment_id)
         return session.exec(stmt).first()
 
-    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None):
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None,
+                     date_from: datetime.date | None = None, date_to: datetime.date | None = None):
         query = (col(Account.user_id) == user.id) if not user.super_user else true()
 
         if processed is not None:
@@ -19,6 +21,11 @@ class PaymentRepository:
 
         if account_id is not None:
             query = query & (Payment.account_id == account_id)
+
+        if date_from is not None:
+            query = query & (col(Payment.date) >= date_from)
+        if date_to is not None:
+            query = query & (col(Payment.date) <= date_to)
 
         stmt = select(Payment).join(Account).where(query).order_by(col(Payment.date).desc())
         return list(session.exec(stmt).all())

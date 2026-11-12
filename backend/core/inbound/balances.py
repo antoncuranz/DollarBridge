@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, SQLModel
 
 from auth import require_super_user, get_current_user
@@ -60,12 +60,17 @@ def get_account_balances(user: Annotated[User, Depends(get_current_user)],
 
 class FeeSummaryTO(SQLModel):
     fees_and_risk_eur: int
+    paid_eur: int
 
 
 @router.get("/fees", response_model=FeeSummaryTO)
 def get_fee_summary(_: Annotated[None, Depends(require_super_user)],
                     session: Annotated[Session, Depends(get_session)],
-                    balance_service: Annotated[BalanceService, Depends()]):
+                    balance_service: Annotated[BalanceService, Depends()],
+                    date_from: Annotated[date | None, Query(alias="from")] = None,
+                    date_to: Annotated[date | None, Query(alias="to")] = None):
+    """Fees of paid transactions. The optional range refers to the date of the settling payment."""
     return FeeSummaryTO(
-        fees_and_risk_eur=balance_service.get_fees_and_risk_eur(session)
+        fees_and_risk_eur=balance_service.get_fees_and_risk_eur(session, date_from, date_to),
+        paid_eur=balance_service.get_paid_amount_eur(session, date_from, date_to)
     )

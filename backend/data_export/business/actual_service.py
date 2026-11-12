@@ -58,6 +58,23 @@ class ActualService:
         for tx in transactions:
             self.update_transaction(session, user, account_id, tx, existing_payees)
 
+    def try_update_transactions(self, session: Session, user: User, account_id: int,
+                                transactions: List[Transaction]) -> List[int]:
+        try:
+            existing_payees = {payee.name: payee.id for payee in self.actual.get_payees(user)}
+        except Exception as e:
+            print("Unable to fetch payees from Actual: " + str(e))
+            return [require_persisted_id(tx) for tx in transactions]
+
+        failed: List[int] = []
+        for tx in transactions:
+            try:
+                self.update_transaction(session, user, account_id, tx, existing_payees)
+            except Exception as e:
+                print("Unable to update transaction {} in Actual: {}".format(tx.id, e))
+                failed.append(require_persisted_id(tx))
+        return failed
+
     def update_transaction(self, session: Session, user: User, account_id: int, tx: Transaction, existing_payees=None):
         account = self.repository.get_account(session, user, account_id)
         if not account:

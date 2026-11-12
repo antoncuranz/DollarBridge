@@ -30,9 +30,15 @@ class CreateBankAccount(SQLModel):
     plaid_account_id: int | None
 
 
+class BankAccountUserTO(SQLModel):
+    id: int
+    name: str
+    super_user: bool = False
+
+
 class BankAccountTO(SQLModel):
     id: int
-    user: User
+    user: BankAccountUserTO
     name: str
     institution: str
     icon: str | None
