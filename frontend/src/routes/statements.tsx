@@ -212,9 +212,18 @@ function StatementsPage() {
   const toSave = tab && tab.status === "ready" ? amountsToSave(tab) : {}
   const saveCount = Object.keys(toSave).length
 
+  // the tab being saved, not the one that is active when the save returns
+  const savingTabId = useRef<StatementTab["id"] | null>(null)
   const save = useSaveAmounts(() => {
-    if (tab) update(tab.id, t => ({ ...t, status: "saved" }))
+    const id = savingTabId.current
+    if (id != null) update(id, t => ({ ...t, status: "saved" }))
   })
+
+  function saveTab() {
+    if (!tab || save.isPending) return
+    savingTabId.current = tab.id
+    save.mutate(toSave)
+  }
 
   const picker = (
     <>
@@ -390,7 +399,7 @@ function StatementsPage() {
               saveCount === 1 ? "Save 1 amount" : `Save ${saveCount} amounts`
             }
             saving={save.isPending}
-            onSave={() => save.mutate(toSave)}
+            onSave={saveTab}
             onDiscard={() => close(tab.id)}
           />
         )

@@ -8,7 +8,8 @@ import { accountById } from "@/lib/derive"
 /** Accounts split into the user's own active cards and other users' cards. */
 export function useAccounts() {
   const user = useUser()
-  const { data: accounts = [], isPending } = useQuery(accountsQuery)
+  const accountsResult = useQuery(accountsQuery)
+  const { data: accounts = [], isPending } = accountsResult
   const { data: balances } = useQuery(accountBalancesQuery)
 
   return useMemo(() => {
@@ -16,11 +17,13 @@ export function useAccounts() {
     return {
       /** the accounts are still loading */
       isPending,
+      /** the accounts query, for queryFailure */
+      accountsResult,
       accounts,
       balances,
       byId: accountById(accounts),
       own: active.filter(account => account.user.id === user.id),
       others: active.filter(account => account.user.id !== user.id),
     }
-  }, [accounts, balances, isPending, user.id])
+  }, [accounts, accountsResult, balances, isPending, user.id])
 }

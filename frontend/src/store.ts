@@ -8,6 +8,8 @@ type State = {
   setDraft: (id: number, amount: number | null) => void
   clearDraft: (id: number) => void
   clearDrafts: () => void
+  /** removes the drafts that were saved, unless they were edited since */
+  clearSavedDrafts: (saved: TransactionAmountMap) => void
 
   /** credit that is being applied to transactions ("apply mode") */
   creditSelection: number | null
@@ -31,6 +33,14 @@ export const useStore = create<State>()(set => ({
       return { drafts }
     }),
   clearDrafts: () => set({ drafts: {} }),
+  clearSavedDrafts: saved =>
+    set(state => ({
+      drafts: Object.fromEntries(
+        Object.entries(state.drafts).filter(
+          ([id, amount]) => !(id in saved) || saved[Number(id)] !== amount,
+        ),
+      ),
+    })),
 
   creditSelection: null,
   setCreditSelection: creditSelection => set({ creditSelection }),

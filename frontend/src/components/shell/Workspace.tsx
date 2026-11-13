@@ -1,5 +1,7 @@
 import type { ReactNode } from "react"
 
+import { describeError } from "@/api/client"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 /**
@@ -115,6 +117,30 @@ export function Rows({
       className={cn("flex flex-col gap-1.5 px-5 md:gap-1 md:px-4", className)}
     >
       {children}
+    </div>
+  )
+}
+
+/** Shown instead of a list whose data could not be loaded. */
+export function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: unknown
+  onRetry: () => void
+}) {
+  return (
+    <div
+      role="alert"
+      className="flex flex-col items-center gap-3 px-5 py-12 text-center text-sm"
+    >
+      <div>
+        <p className="font-medium text-destructive">Could not load the data</p>
+        <p className="text-muted-foreground">{describeError(error)}</p>
+      </div>
+      <Button variant="secondary" onClick={onRetry}>
+        Try again
+      </Button>
     </div>
   )
 }

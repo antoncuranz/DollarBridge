@@ -6,7 +6,11 @@ import type { ReactNode } from "react"
 
 import type { Account, BankAccount, PlaidConnection } from "@/types"
 import { useDeleteConnection, useDiscoverPlaidAccounts } from "@/api/mutations"
-import { bankAccountsQuery, connectionsQuery } from "@/api/queries"
+import {
+  bankAccountsQuery,
+  connectionsQuery,
+  queryFailure,
+} from "@/api/queries"
 import { useUser } from "@/api/useUser"
 import { PlaidLink } from "@/components/accounts/PlaidLink"
 import { BankAccountDialog } from "@/components/dialog/BankAccountDialog"
@@ -14,7 +18,12 @@ import { CreditCardDialog } from "@/components/dialog/CreditCardDialog"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
 import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { RowAction, Swatch } from "@/components/list/Row"
-import { ListHeader, Rows, Workspace } from "@/components/shell/Workspace"
+import {
+  ErrorState,
+  ListHeader,
+  Rows,
+  Workspace,
+} from "@/components/shell/Workspace"
 import { SidebarHeader } from "@/components/sidebar/AccountFilter"
 import { SidebarItemsSkeleton } from "@/components/sidebar/SidebarSkeleton"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
@@ -183,12 +192,19 @@ type Editing =
 
 function AccountsPage() {
   const user = useUser()
-  const { accounts, balances, isPending: accountsPending } = useAccounts()
+  const {
+    accounts,
+    balances,
+    isPending: accountsPending,
+    accountsResult,
+  } = useAccounts()
+  const bankAccountsResult = useQuery(bankAccountsQuery)
   const { data: bankAccounts = [], isPending: bankAccountsPending } =
-    useQuery(bankAccountsQuery)
+    bankAccountsResult
   const { data: connections = [], isPending: connectionsPending } =
     useQuery(connectionsQuery)
-  const loading = accountsPending || bankAccountsPending
+  const failure = queryFailure(accountsResult, bankAccountsResult)
+  const loading = !failure && (accountsPending || bankAccountsPending)
 
   const [editing, setEditing] = useState<Editing>(null)
   /** undefined: closed, null: new connection, number: repair that connection */
@@ -306,7 +322,7 @@ function AccountsPage() {
         <ListHeader
           title="Accounts"
           subtitle={
-            loading
+            loading || failure
               ? undefined
               : `${active.length} credit ${active.length === 1 ? "card" : "cards"} · ${bankAccounts.length} bank ${bankAccounts.length === 1 ? "account" : "accounts"}`
           }
@@ -315,7 +331,9 @@ function AccountsPage() {
         </ListHeader>
       }
     >
-      {loading ? (
+      {failure ? (
+        <ErrorState error={failure.error} onRetry={failure.retry} />
+      ) : loading ? (
         <ListSkeleton tall groups={[5, 2]} />
       ) : (
         <>

@@ -1,7 +1,13 @@
 import { ArrowLeftRight, Check } from "lucide-react"
 import { useState } from "react"
 
-import { AmountField, ContextBox, ContextLine, Dialog } from "./Dialog"
+import {
+  AmountField,
+  ContextBox,
+  ContextLine,
+  Dialog,
+  useInvalidFields,
+} from "./Dialog"
 import type { Account, Exchange, Payment } from "@/types"
 import { useApplyExchange } from "@/api/mutations"
 import { Swatch } from "@/components/list/Row"
@@ -37,9 +43,11 @@ export function ExchangePaymentDialog({
   )
   const applied = amount ?? 0
   const tooMuch = applied > maximum || applied < 0
+  const { anyInvalid, track } = useInvalidFields()
   const mutation = useApplyExchange()
 
   function save() {
+    if (tooMuch || anyInvalid) return
     mutation.mutate(
       { exchangeId: exchange.id, paymentId: payment.id, amount: applied },
       { onSuccess: onClose },
@@ -75,7 +83,7 @@ export function ExchangePaymentDialog({
           <Button
             size="lg"
             className="flex-1 rounded-full"
-            disabled={tooMuch || mutation.isPending}
+            disabled={tooMuch || anyInvalid || mutation.isPending}
             onClick={save}
           >
             <Check />
@@ -107,6 +115,7 @@ export function ExchangePaymentDialog({
         autoFocus
         value={amount}
         onChange={setAmount}
+        onInvalidChange={track("amount")}
         hint={
           tooMuch ? (
             <span className="text-destructive">

@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check } from "lucide-react"
-import { useId } from "react"
+import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -134,9 +134,13 @@ export function CreditCardDialog({
   const issuer = watch("issuer")
   const ownBankAccounts = bankAccounts.filter(b => b.user.id === ownerId)
 
-  const submit = handleSubmit(values =>
-    mutation.mutate(
-      {
+  // Enter in the form can fire again while the save is still running
+  const saving = useRef(false)
+  const submit = handleSubmit(async values => {
+    if (saving.current) return
+    saving.current = true
+    try {
+      await mutation.mutateAsync({
         name: values.name,
         institution: values.institution,
         issuer: values.issuer,
@@ -148,10 +152,14 @@ export function CreditCardDialog({
         plaid_account_id: values.plaid_account_id,
         actual_id: values.actual_id || null,
         active: values.active,
-      },
-      { onSuccess: onClose },
-    ),
-  )
+      })
+      onClose()
+    } catch {
+      // already toasted by the mutation
+    } finally {
+      saving.current = false
+    }
+  })
 
   return (
     <Dialog

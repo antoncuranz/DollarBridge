@@ -1,7 +1,13 @@
 import { Check, Link as LinkIcon } from "lucide-react"
 import { useState } from "react"
 
-import { AmountField, ContextBox, ContextLine, Dialog } from "./Dialog"
+import {
+  AmountField,
+  ContextBox,
+  ContextLine,
+  Dialog,
+  useInvalidFields,
+} from "./Dialog"
 import type { Account, Credit, Transaction } from "@/types"
 import { useApplyCredit } from "@/api/mutations"
 import { Swatch } from "@/components/list/Row"
@@ -49,16 +55,20 @@ export function ApplyCreditDialog({
   const adjusted =
     adjustedOverride !== undefined ? adjustedOverride : suggestion
   const tooMuch = applied > maximum || applied < 0
+  const { anyInvalid, track } = useInvalidFields()
 
   const mutation = useApplyCredit()
 
   function save() {
+    if (tooMuch || anyInvalid) return
     mutation.mutate(
       {
         creditId: credit.id,
         transactionId: transaction.id,
         amount: applied,
-        adjustedAmountEur: adjust ? adjusted : undefined,
+        // without an amount the stored EUR amount stays as it is: an empty
+        // value would make the backend clear it
+        adjustedAmountEur: adjust && adjusted != null ? adjusted : undefined,
       },
       { onSuccess: onClose },
     )
@@ -75,7 +85,7 @@ export function ApplyCreditDialog({
         <Button
           size="lg"
           className="flex-1 rounded-full"
-          disabled={tooMuch || mutation.isPending}
+          disabled={tooMuch || anyInvalid || mutation.isPending}
           onClick={save}
         >
           <Check />
@@ -113,6 +123,7 @@ export function ApplyCreditDialog({
           setAmount(value)
           setAdjustedOverride(undefined)
         }}
+        onInvalidChange={track("amount")}
         hint={
           tooMuch ? (
             <span className="text-destructive">
@@ -135,10 +146,13 @@ export function ApplyCreditDialog({
           format="eur"
           value={adjusted}
           onChange={setAdjustedOverride}
+          onInvalidChange={track("adjusted")}
           hint={
-            before != null
-              ? `Was ${formatAmount(before)} · suggested from the remaining ${formatUsd(Math.max(transactionOpen - applied, 0))} at the ${transaction.amount_eur != null ? "current" : "estimate"} rate`
-              : "No estimate available for this transaction"
+            adjusted == null
+              ? "Leave empty to keep the current EUR amount"
+              : before != null
+                ? `Was ${formatAmount(before)} · suggested from the remaining ${formatUsd(Math.max(transactionOpen - applied, 0))} at the ${transaction.amount_eur != null ? "current" : "estimate"} rate`
+                : "No estimate available for this transaction"
           }
         />
       )}

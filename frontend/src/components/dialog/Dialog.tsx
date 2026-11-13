@@ -1,6 +1,6 @@
 import { format, parseISO } from "date-fns"
 import { ChevronDown } from "lucide-react"
-import { useEffect, useId, useState } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import type { ReactNode } from "react"
 
 import {
@@ -130,12 +130,41 @@ const formats: Record<
   rate: { decimals: 7, format: value => (value / 1e7).toString() },
 }
 
+/**
+ * Tracks which AmountFields of a dialog hold text that is not a valid amount,
+ * so the dialog can refuse to save the stale value behind them.
+ */
+export function useInvalidFields() {
+  const [invalid, setInvalid] = useState<ReadonlySet<string>>(new Set())
+  const callbacks = useRef(new Map<string, (isInvalid: boolean) => void>())
+
+  const track = useCallback((name: string) => {
+    let callback = callbacks.current.get(name)
+    if (!callback) {
+      callback = (isInvalid: boolean) =>
+        setInvalid(current => {
+          if (current.has(name) === isInvalid) return current
+          const next = new Set(current)
+          if (isInvalid) next.add(name)
+          else next.delete(name)
+          return next
+        })
+      callbacks.current.set(name, callback)
+    }
+    return callback
+  }, [])
+
+  return { anyInvalid: invalid.size > 0, track }
+}
+
 /** Input for an amount in minor units. Commits the parsed value on blur. */
 export function AmountField({
   label,
   hint,
   value,
   onChange,
+  onInvalidChange,
+  allowNegative = false,
   format = "eur",
   placeholder,
   autoFocus,
@@ -146,6 +175,9 @@ export function AmountField({
   hint?: ReactNode
   value: number | null
   onChange: (value: number | null) => void
+  /** told whenever the typed text stops or starts being a valid amount */
+  onInvalidChange?: (invalid: boolean) => void
+  allowNegative?: boolean
   format?: AmountFormat
   placeholder?: string
   autoFocus?: boolean
@@ -163,11 +195,21 @@ export function AmountField({
     setInvalid(false)
   }, [value])
 
+  useEffect(() => {
+    onInvalidChange?.(invalid)
+  }, [invalid, onInvalidChange])
+
+  // a field that goes away no longer blocks saving
+  useEffect(() => () => onInvalidChange?.(false), [onInvalidChange])
+
   function commit() {
     // thousands separators of the grouped format are not decimals
     const cleaned = format === "usd" ? text.replace(/,(?=\d{3})/g, "") : text
     const parsed = parseAmount(cleaned, decimals)
-    if (parsed === undefined) {
+    if (
+      parsed === undefined ||
+      (!allowNegative && parsed != null && parsed < 0)
+    ) {
       setInvalid(true)
       return
     }

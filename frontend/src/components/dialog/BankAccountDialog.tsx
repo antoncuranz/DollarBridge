@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check } from "lucide-react"
-import { useId } from "react"
+import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -48,9 +48,20 @@ export function BankAccountDialog({
     },
   })
 
-  const submit = handleSubmit(values =>
-    mutation.mutate(values, { onSuccess: onClose }),
-  )
+  // Enter in the form can fire again while the save is still running
+  const saving = useRef(false)
+  const submit = handleSubmit(async values => {
+    if (saving.current) return
+    saving.current = true
+    try {
+      await mutation.mutateAsync(values)
+      onClose()
+    } catch {
+      // already toasted by the mutation
+    } finally {
+      saving.current = false
+    }
+  })
 
   return (
     <Dialog

@@ -8,6 +8,7 @@ import {
   DateField,
   Dialog,
   FieldRow,
+  useInvalidFields,
 } from "./Dialog"
 import { useCreateExchange } from "@/api/mutations"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
   const [amountUsd, setAmountUsd] = useState<number | null>(null)
   const [rate, setRate] = useState<number | null>(null)
   const [paidEur, setPaidEur] = useState<number | null>(null)
+  const { anyInvalid, track } = useInvalidFields()
 
   const amountEur =
     amountUsd != null && rate ? exchangeAmountEur(amountUsd, rate) : null
@@ -28,8 +30,11 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
     date !== "" &&
     amountUsd != null &&
     amountUsd > 0 &&
-    !!rate &&
-    paidEur != null
+    rate != null &&
+    rate > 0 &&
+    paidEur != null &&
+    paidEur >= 0 &&
+    !anyInvalid
 
   const mutation = useCreateExchange()
 
@@ -66,6 +71,7 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
           autoFocus
           value={amountUsd}
           onChange={setAmountUsd}
+          onInvalidChange={track("amountUsd")}
         />
       </FieldRow>
       <FieldRow>
@@ -75,6 +81,7 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
           placeholder="1.0820"
           value={rate}
           onChange={setRate}
+          onInvalidChange={track("rate")}
         />
         <ComputedField
           label="Amount (EUR)"
@@ -94,6 +101,7 @@ export function ExchangeDialog({ onClose }: { onClose: () => void }) {
           format="eur"
           value={paidEur}
           onChange={setPaidEur}
+          onInvalidChange={track("paidEur")}
         />
         <ComputedField label="Fees (EUR)" prefix="€" hint="= Paid − Amount">
           {fees != null ? formatAmount(fees) : "–"}

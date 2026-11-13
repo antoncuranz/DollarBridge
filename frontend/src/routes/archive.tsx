@@ -9,6 +9,7 @@ import {
   feesQuery,
   paidTransactionsQuery,
   processedPaymentsQuery,
+  queryFailure,
 } from "@/api/queries"
 import { useUser } from "@/api/useUser"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
@@ -16,6 +17,7 @@ import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { Amount, EurValue, Row, Swatch } from "@/components/list/Row"
 import {
   EmptyState,
+  ErrorState,
   ListHeader,
   MobileActions,
   Rows,
@@ -73,22 +75,32 @@ function ArchivePage() {
   const user = useUser()
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
-  const { byId, own, isPending: accountsPending } = useAccounts()
+  const {
+    byId,
+    own,
+    isPending: accountsPending,
+    accountsResult,
+  } = useAccounts()
 
   const month = parseMonthKey(search.month)
   const range = monthRange(month)
   const accountId = search.account ?? null
 
-  const { data: transactions = [], isPending } = useQuery(
-    paidTransactionsQuery(range),
-  )
-  const { data: payments = [] } = useQuery(processedPaymentsQuery(range))
+  const transactionsResult = useQuery(paidTransactionsQuery(range))
+  const paymentsResult = useQuery(processedPaymentsQuery(range))
+  const { data: transactions = [], isPending } = transactionsResult
+  const { data: payments = [] } = paymentsResult
   const { data: fees, isLoading: feesLoading } = useQuery({
     ...feesQuery(range),
     enabled: user.super_user,
   })
   const unprocess = useUnprocessPayment()
-  const loading = isPending || accountsPending
+  const failure = queryFailure(
+    transactionsResult,
+    paymentsResult,
+    accountsResult,
+  )
+  const loading = !failure && (isPending || accountsPending)
 
   const setSearch = (next: Search) =>
     void navigate({ search: { ...search, ...next }, replace: true })
@@ -218,7 +230,7 @@ function ArchivePage() {
         <ListHeader
           title="Paid transactions"
           subtitle={
-            loading
+            loading || failure
               ? formatMonth(month)
               : `${formatMonth(month)} · ${visible.length} total`
           }
@@ -287,7 +299,8 @@ function ArchivePage() {
         )
       })}
       {loading && <ListSkeleton groups={[3, 5]} />}
-      {!loading && visible.length === 0 && (
+      {failure && <ErrorState error={failure.error} onRetry={failure.retry} />}
+      {!loading && !failure && visible.length === 0 && (
         <EmptyState>Nothing was paid in {formatMonth(month)}.</EmptyState>
       )}
     </Workspace>

@@ -44,9 +44,11 @@ export function useApiMutation<TVariables = void, TData = void>({
 }
 
 /** everything that depends on transaction amounts */
-const amountDependents = [keys.transactions, keys.payments, keys.balances]
+const amountDependents = [keys.transactions, keys.payments, keys.allBalances]
 
-export function useSaveAmounts(onSaved?: () => void) {
+export function useSaveAmounts(
+  onSaved?: (saved: TransactionAmountMap) => void,
+) {
   return useApiMutation({
     mutationFn: (amounts: TransactionAmountMap) =>
       api.put<TransactionAmountsResult>("/api/transactions/amounts", {
@@ -57,7 +59,7 @@ export function useSaveAmounts(onSaved?: () => void) {
       }),
     invalidates: amountDependents,
     errorTitle: "Amounts were not saved",
-    onSuccess: result => {
+    onSuccess: (result, amounts) => {
       if (result.actual_failed.length > 0) {
         toast.warning("Saved, but not everything reached Actual", {
           description: `${result.actual_failed.length} of ${result.saved.length} transactions could not be updated in Actual. Run the Actual export to retry.`,
@@ -69,7 +71,7 @@ export function useSaveAmounts(onSaved?: () => void) {
             : `${result.saved.length} amounts saved`,
         )
       }
-      onSaved?.()
+      onSaved?.(amounts)
     },
   })
 }
@@ -101,7 +103,7 @@ export function useApplyCredit() {
       transactionId: number
       amount: number
       /** undefined: leave the transaction's EUR amount as it is */
-      adjustedAmountEur?: number | null
+      adjustedAmountEur?: number
     }) => {
       await api.put(`/api/credits/${creditId}`, {
         params: { amount, transaction: transactionId },
@@ -124,7 +126,7 @@ export function useImport() {
       keys.transactions,
       keys.credits,
       keys.payments,
-      keys.balances,
+      keys.allBalances,
       keys.bankAccounts,
     ],
     errorTitle: "Import failed",
@@ -142,7 +144,7 @@ export function useActualExport() {
   })
 }
 
-const exchangeDependents = [keys.exchanges, keys.payments, keys.balances]
+const exchangeDependents = [keys.exchanges, keys.payments, keys.allBalances]
 
 export function useCreateExchange() {
   return useApiMutation({
@@ -190,7 +192,7 @@ const paymentDependents = [
   keys.payments,
   keys.transactions,
   keys.exchanges,
-  keys.balances,
+  keys.allBalances,
   keys.credits,
 ]
 
@@ -239,7 +241,7 @@ export type AccountInput = {
 const accountDependents = [
   keys.accounts,
   keys.bankAccounts,
-  keys.balances,
+  keys.allBalances,
   keys.dates,
 ]
 

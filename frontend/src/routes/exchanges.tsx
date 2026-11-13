@@ -13,6 +13,7 @@ import {
 import {
   balancesQuery,
   openPaymentsQuery,
+  queryFailure,
   usableExchangesQuery,
 } from "@/api/queries"
 import { useUser } from "@/api/useUser"
@@ -24,6 +25,7 @@ import { Amount, EurValue, Row, RowAction, Swatch } from "@/components/list/Row"
 import { RowMenu } from "@/components/list/RowMenu"
 import {
   EmptyState,
+  ErrorState,
   ListHeader,
   Rows,
   Workspace,
@@ -110,13 +112,16 @@ function Summary() {
 
 function ExchangesPage() {
   const user = useUser()
-  const { byId, isPending: accountsPending } = useAccounts()
-  const { data: exchanges = [], isLoading: exchangesLoading } = useQuery({
+  const { byId, isPending: accountsPending, accountsResult } = useAccounts()
+  const exchangesResult = useQuery({
     ...usableExchangesQuery,
     enabled: user.super_user,
   })
-  const { data: allPayments = [], isPending } = useQuery(openPaymentsQuery)
-  const loading = isPending || accountsPending || exchangesLoading
+  const paymentsResult = useQuery(openPaymentsQuery)
+  const { data: exchanges = [], isLoading: exchangesLoading } = exchangesResult
+  const { data: allPayments = [], isPending } = paymentsResult
+  const failure = queryFailure(exchangesResult, paymentsResult, accountsResult)
+  const loading = !failure && (isPending || accountsPending || exchangesLoading)
 
   const exchangeSelection = useStore(state => state.exchangeSelection)
   const setExchangeSelection = useStore(state => state.setExchangeSelection)
@@ -402,7 +407,9 @@ function ExchangesPage() {
         )
       }
     >
-      {loading ? (
+      {failure ? (
+        <ErrorState error={failure.error} onRetry={failure.retry} />
+      ) : loading ? (
         <ListSkeleton groups={[2, 5]} />
       ) : (
         <>

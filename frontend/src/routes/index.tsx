@@ -8,6 +8,7 @@ import { useActualExport, useImport, useSaveAmounts } from "@/api/mutations"
 import {
   bankAccountsQuery,
   openTransactionsQuery,
+  queryFailure,
   usableCreditsQuery,
 } from "@/api/queries"
 import { useUser } from "@/api/useUser"
@@ -17,6 +18,7 @@ import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { SaveBar } from "@/components/shell/SaveBar"
 import {
   EmptyState,
+  ErrorState,
   ListHeader,
   MobileActions,
   Rows,
@@ -66,17 +68,26 @@ function TransactionsPage() {
     others,
     balances,
     isPending: accountsPending,
+    accountsResult,
   } = useAccounts()
 
-  const { data: transactions = [], isPending } = useQuery(openTransactionsQuery)
-  const { data: credits = [], isPending: creditsPending } =
-    useQuery(usableCreditsQuery)
+  const transactionsResult = useQuery(openTransactionsQuery)
+  const creditsResult = useQuery(usableCreditsQuery)
+  const { data: transactions = [], isPending } = transactionsResult
+  const { data: credits = [], isPending: creditsPending } = creditsResult
   const { data: bankAccounts = [] } = useQuery(bankAccountsQuery)
   // credits and transactions form one list: show it only when both are there
-  const loading = isPending || creditsPending || accountsPending
+  const failure = queryFailure(
+    transactionsResult,
+    creditsResult,
+    accountsResult,
+  )
+  const loading = !failure && (isPending || creditsPending || accountsPending)
+  const ready = !loading && !failure
 
   const drafts = useStore(state => state.drafts)
   const clearDrafts = useStore(state => state.clearDrafts)
+  const clearSavedDrafts = useStore(state => state.clearSavedDrafts)
   const missingEurOnly = useStore(state => state.missingEurOnly)
   const setMissingEurOnly = useStore(state => state.setMissingEurOnly)
   const creditSelection = useStore(state => state.creditSelection)
@@ -128,7 +139,7 @@ function TransactionsPage() {
   )
 
   const draftCount = Object.keys(drafts).length
-  const save = useSaveAmounts(clearDrafts)
+  const save = useSaveAmounts(clearSavedDrafts)
   const importData = useImport()
   const actualExport = useActualExport()
 
@@ -212,7 +223,7 @@ function TransactionsPage() {
     <ListHeader
       title={account?.name ?? "All accounts"}
       subtitle={
-        loading
+        loading || failure
           ? undefined
           : missingCount === 1
             ? "1 missing EUR amount"
@@ -356,8 +367,9 @@ function TransactionsPage() {
       }
     >
       {loading && <ListSkeleton />}
+      {failure && <ErrorState error={failure.error} onRetry={failure.retry} />}
 
-      {!loading && visibleCredits.length > 0 && (
+      {ready && visibleCredits.length > 0 && (
         <>
           <GroupSeparator
             first
@@ -384,7 +396,7 @@ function TransactionsPage() {
         </>
       )}
 
-      {!loading &&
+      {ready &&
         days.map((day, index) => {
           return (
             <div key={day.key} className="flex flex-col">
@@ -413,7 +425,7 @@ function TransactionsPage() {
           )
         })}
 
-      {!loading && visible.length === 0 && (
+      {ready && visible.length === 0 && (
         <EmptyState>
           {missingEurOnly && inAccount.length > 0
             ? "Every transaction has an EUR amount."

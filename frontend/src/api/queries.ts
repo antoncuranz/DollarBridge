@@ -21,6 +21,8 @@ export const keys = {
   user: ["user"] as const,
   accounts: ["accounts"] as const,
   bankAccounts: ["bank-accounts"] as const,
+  /** prefix of every balance query: total, per account and fees */
+  allBalances: ["balances"] as const,
   accountBalances: ["balances", "accounts"] as const,
   balances: ["balances", "total"] as const,
   fees: ["balances", "fees"] as const,
@@ -117,3 +119,22 @@ export const connectionsQuery = queryOptions({
   queryFn: () =>
     api.get<Array<PlaidConnection>>("/api/import/plaid/connections"),
 })
+
+type Loadable = { data: unknown; error: unknown; refetch: () => unknown }
+
+/**
+ * The failure of the first query that has no data because it failed, so a
+ * page can show an error instead of an empty list. A failed background
+ * refetch keeps the data it had and is not reported.
+ */
+export function queryFailure(...queries: Array<Loadable>) {
+  const failed = queries.filter(
+    query => query.error != null && query.data === undefined,
+  )
+  const first = failed[0]
+  if (!first) return null
+  return {
+    error: first.error,
+    retry: () => failed.forEach(query => void query.refetch()),
+  }
+}
