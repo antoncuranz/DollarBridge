@@ -3,7 +3,11 @@ import { toast } from "sonner"
 
 import { api, describeError } from "./client"
 import { keys } from "./queries"
-import type { TransactionAmountMap, TransactionAmountsResult } from "@/types"
+import type {
+  Issuer,
+  TransactionAmountMap,
+  TransactionAmountsResult,
+} from "@/types"
 
 type Options<TVariables, TData> = {
   mutationFn: (variables: TVariables) => Promise<TData>
@@ -221,6 +225,7 @@ export function useDeletePayment() {
 export type AccountInput = {
   name: string
   institution: string
+  issuer: Issuer | null
   due_day: number | null
   autopay_offset: number | null
   color: string | null

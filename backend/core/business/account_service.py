@@ -6,12 +6,14 @@ from sqlmodel import Session, SQLModel
 
 from core.dataaccess.store import Store
 from data_import.facade import DataImportFacade
+from dates.business.issuer_rules import Issuer
 from models import User, Account, BankAccount
 
 
 class CreateAccount(SQLModel):
     name: str
     institution: str
+    issuer: Issuer | None = None
     due_day: int | None
     autopay_offset: int | None
     color: str | None
@@ -60,6 +62,7 @@ class AccountService:
         account = self.store.create_account(session, user, bank_account_id=create_account.bank_account_id,
                           actual_id=create_account.actual_id, plaid_account_id=create_account.plaid_account_id,
                           name=create_account.name, institution=create_account.institution,
+                          issuer=create_account.issuer.value if create_account.issuer else None,
                           due_day=create_account.due_day, autopay_offset=create_account.autopay_offset,
                           color=create_account.color, target_spend=create_account.target_spend,
                           active=create_account.active)
@@ -73,6 +76,7 @@ class AccountService:
         
         account.name = create_account.name
         account.institution = create_account.institution
+        account.issuer = create_account.issuer.value if create_account.issuer else None
         account.due_day = create_account.due_day
         account.autopay_offset = create_account.autopay_offset
         account.color = create_account.color

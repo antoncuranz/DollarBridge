@@ -6,7 +6,7 @@ import { z } from "zod"
 
 import { Dialog, Field } from "./Dialog"
 import { PlaidAccountSelect } from "./PlaidAccountSelect"
-import type { Account, BankAccount, PlaidConnection } from "@/types"
+import type { Account, BankAccount, Issuer, PlaidConnection } from "@/types"
 import { useSaveAccount } from "@/api/mutations"
 import { useUser } from "@/api/useUser"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ const optionalInteger = (min: number, max: number, message: string) =>
 const schema = z.object({
   name: z.string().trim().min(1, "Required"),
   institution: z.string().trim().min(1, "Required"),
+  issuer: z.enum(["amex", "capital_one", "chase", "other"]),
   color: z
     .string()
     .trim()
@@ -60,6 +61,34 @@ const toText = (value: number | null | undefined) =>
 
 const NONE = -1
 
+/** How each issuer derives the autopay and statement dates from the due day. */
+const issuers: Record<
+  Issuer,
+  { label: string; rule: string; autopayOffset: number }
+> = {
+  amex: {
+    label: "American Express",
+    rule: "Autopay a few days before the due date, a Sunday moves to Saturday. Statement closes 25 days before the due date.",
+    autopayOffset: 10,
+  },
+  capital_one: {
+    label: "Capital One",
+    rule: "Autopay on the due date, a Sunday moves to Monday. Statement closes 25 days before the due date.",
+    autopayOffset: 0,
+  },
+  chase: {
+    label: "Chase",
+    rule: "Autopay on the due date, a Saturday moves to Friday. Statement closes 3 days after the due day, one month earlier.",
+    autopayOffset: 0,
+  },
+  other: {
+    label: "Other",
+    rule: "Autopay exactly on the due date minus the offset. Statement closes 25 days before the due date.",
+    autopayOffset: 0,
+  },
+}
+const issuerKeys = Object.keys(issuers) as Array<Issuer>
+
 /** Edits a credit card, or adds one when no account is given. */
 export function CreditCardDialog({
   account,
@@ -82,12 +111,14 @@ export function CreditCardDialog({
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: account?.name ?? "",
       institution: account?.institution ?? "",
+      issuer: account?.issuer ?? "other",
       color: account?.color ?? "",
       due_day: toText(account?.due_day),
       autopay_offset: toText(account?.autopay_offset),
@@ -100,6 +131,7 @@ export function CreditCardDialog({
   })
 
   const color = watch("color")
+  const issuer = watch("issuer")
   const ownBankAccounts = bankAccounts.filter(b => b.user.id === ownerId)
 
   const submit = handleSubmit(values =>
@@ -107,6 +139,7 @@ export function CreditCardDialog({
       {
         name: values.name,
         institution: values.institution,
+        issuer: values.issuer,
         color: values.color || null,
         due_day: toNumber(values.due_day),
         autopay_offset: toNumber(values.autopay_offset),
@@ -202,6 +235,47 @@ export function CreditCardDialog({
             />
           </Field>
         </div>
+        <Field
+          label="Payment rules"
+          htmlFor={id + "issuer"}
+          hint={issuers[issuer].rule}
+        >
+          <Controller
+            control={control}
+            name="issuer"
+            render={({ field }) => (
+              <Select
+                items={issuerKeys.map(key => ({
+                  value: key,
+                  label: issuers[key].label,
+                }))}
+                value={field.value}
+                onValueChange={value => {
+                  const next = value as Issuer
+                  field.onChange(next)
+                  // each issuer has its usual autopay offset; it stays editable
+                  setValue(
+                    "autopay_offset",
+                    String(issuers[next].autopayOffset),
+                  )
+                }}
+              >
+                <SelectTrigger id={id + "issuer"}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPositioner>
+                  <SelectContent>
+                    {issuerKeys.map(key => (
+                      <SelectItem key={key} value={key}>
+                        {issuers[key].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </SelectPositioner>
+              </Select>
+            )}
+          />
+        </Field>
         <div className="grid grid-cols-3 gap-3">
           <Field
             label="Due day"

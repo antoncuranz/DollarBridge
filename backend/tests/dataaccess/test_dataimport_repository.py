@@ -165,3 +165,44 @@ def test_get_or_create_payment_existing(session: Session, model_class, args, get
     # Assert
     assert created is False
     session.exec(select(model_class).where(model_class.import_id == args["import_id"])).one()
+
+
+def test_imported_payment_matches_pending_payment_a_few_days_off(session: Session):
+    # the pending payment was predicted for the 5th, the real one posted on the 3rd
+    session.add(Payment(account_id=1, date=datetime.date(2026, 9, 5), counterparty="cp", description="desc", amount_usd=123, status=1))
+
+    assert under_test.get_pending_payment(session, 1, datetime.date(2026, 9, 3), 123) is not None
+    assert under_test.get_pending_payment(session, 1, datetime.date(2026, 9, 8), 123) is not None
+    assert under_test.get_pending_payment(session, 1, datetime.date(2026, 9, 9), 123) is None
+    assert under_test.get_pending_payment(session, 1, datetime.date(2026, 9, 3), 124) is None
+    # without an amount only the exact date counts
+    assert under_test.get_pending_payment(session, 1, datetime.date(2026, 9, 3)) is None
+
+
+def test_pending_payment_sums_by_posting_date(session: Session):
+    account = session.exec(select(Account).where(Account.id == 1)).one()
+    statement = datetime.date(2026, 6, 4)
+    last_statement = datetime.date(2026, 5, 4)
+
+    day = datetime.date.fromisoformat
+
+    def tx(id: int, date: str, posted: str | None, amount: int):
+        return Transaction(id=id, account_id=1, import_id=f"tx-{id}", date=day(date),
+                           posted_date=day(posted) if posted else None,
+                           counterparty="cp", description="desc", amount_usd=amount, status=2)
+
+    session.add_all([
+        tx(1, "2026-06-03", "2026-06-04", 100),   # posted on the closing day: in
+        tx(2, "2026-06-04", "2026-06-05", 200),   # bought on the closing day, posted after it: next statement
+        tx(3, "2026-05-04", "2026-05-06", 400),   # bought before the last closing day, posted after it: in
+        tx(4, "2026-06-04", None, 800),           # no posting date known: the purchase date decides
+        Credit(id=1, account_id=1, import_id="cr-1", date=day("2026-06-04"), posted_date=day("2026-06-05"),
+               counterparty="cp", description="desc", amount_usd=1000),
+        Credit(id=2, account_id=1, import_id="cr-2", date=day("2026-05-20"), posted_date=day("2026-05-21"),
+               counterparty="cp", description="desc", amount_usd=50),
+    ])
+    session.commit()
+
+    payment = under_test.create_pending_payment(session, account, statement, last_statement, datetime.date(2026, 7, 1))
+
+    assert payment.amount_usd == 100 + 400 + 800 - 50

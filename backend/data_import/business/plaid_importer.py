@@ -68,6 +68,10 @@ class PlaidImporter(AbstractImporter):
         session.commit()
         
 
+    def _posted_date(self, tx):
+        # "date" is the posting date; "authorized_date" (the purchase) is what is shown
+        return None if tx["pending"] else tx["date"]
+
     def _make_transaction_args(self, tx, account_id):
         counterparty = next((cp["name"] for cp in tx["counterparties"] if "HIGH" in cp["confidence_level"]), None)
         return {

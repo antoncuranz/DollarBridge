@@ -19,6 +19,7 @@ class AccountTO(SQLModel):
     plaid_account_id: int | None
     name: str
     institution: str
+    issuer: str | None
     due_day: int | None
     autopay_offset: int | None
     color: str | None

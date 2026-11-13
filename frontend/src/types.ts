@@ -12,6 +12,7 @@ export type Account = {
   plaid_account_id: number | null
   name: string
   institution: string
+  issuer: Issuer | null
   due_day: number | null
   autopay_offset: number | null
   color: string | null
@@ -150,12 +151,17 @@ export type FeeSummary = {
   paid_eur: number
 }
 
+/** selects the rules for payment and statement dates */
+export type Issuer = "amex" | "capital_one" | "chase" | "other"
+
 export type AccountDatesMap = Record<string, AccountDates | undefined>
 
 export type AccountDates = {
   color: string
-  due: string
-  statement: string
+  /** days in the requested month on which autopay posts */
+  due: Array<string>
+  /** days in the requested month on which a statement closes */
+  statement: Array<string>
 }
 
 export type PlaidAccount = {

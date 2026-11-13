@@ -38,12 +38,14 @@ function collectMarks(maps: Array<AccountDatesMap | undefined>): Marks {
     for (const [accountId, dates] of Object.entries(map ?? {})) {
       if (!dates) continue
       for (const kind of ["due", "statement"] as const) {
-        const key = `${kind}:${accountId}:${dates[kind]}`
-        if (seen.has(key)) continue
-        seen.add(key)
-        const colors = marks[kind].get(dates[kind]) ?? []
-        colors.push(dates.color)
-        marks[kind].set(dates[kind], colors)
+        for (const date of dates[kind]) {
+          const key = `${kind}:${accountId}:${date}`
+          if (seen.has(key)) continue
+          seen.add(key)
+          const colors = marks[kind].get(date) ?? []
+          colors.push(dates.color)
+          marks[kind].set(date, colors)
+        }
       }
     }
   }
@@ -269,7 +271,9 @@ export function DueCalendarCard() {
 
   const nextDue = results
     .flatMap(result => Object.entries(result.data ?? {}))
-    .map(([accountId, dates]) => ({ accountId, due: parseISO(dates!.due) }))
+    .flatMap(([accountId, dates]) =>
+      (dates?.due ?? []).map(due => ({ accountId, due: parseISO(due) })),
+    )
     .filter(entry => entry.due >= today)
     .sort((a, b) => a.due.getTime() - b.due.getTime())[0]
   const nextDueAccount = accounts?.find(

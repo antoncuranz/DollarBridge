@@ -73,6 +73,7 @@ class Account(SQLModel, table=True):
     plaid_account: PlaidAccount | None = Relationship()
     name: str
     institution: str
+    issuer: str | None = None  # dates.business.issuer_rules.Issuer
     due_day: int | None = None
     autopay_offset: int | None = None
     color: str | None = None
@@ -148,6 +149,7 @@ class TransactionBase(SQLModel):
     import_id: str = Field(unique=True)
     actual_id: str | None = None
     date: datetime.date = Field(default_factory=datetime.date.today)
+    posted_date: datetime.date | None = None  # decides which statement it belongs to
     counterparty: str
     description: str
     category: str | None = None
@@ -193,6 +195,7 @@ class Credit(SQLModel, table=True):
     account: Account = Relationship()
     import_id: str = Field(unique=True)
     date: datetime.date = Field(default_factory=datetime.date.today)
+    posted_date: datetime.date | None = None
     counterparty: str
     description: str
     category: str | None = None
