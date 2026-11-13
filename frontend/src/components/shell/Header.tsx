@@ -85,9 +85,9 @@ export function Header() {
 
   return (
     <header className="flex h-22 shrink-0 flex-col border-b bg-background pt-2 shadow-sm md:h-14 md:flex-row md:items-center md:gap-2 md:border-b-0 md:bg-transparent md:pt-0 md:shadow-none">
-      <div className="flex items-center gap-2 px-3 md:contents">
+      <div className="flex items-center gap-2 pr-3 pl-5 md:contents">
         <h1 className="flex-1 truncate text-2xl leading-10 font-semibold md:flex-none">
-          money tracking
+          Dollar Bridge
         </h1>
         <div className="md:order-last">
           <HeaderActions />

@@ -108,10 +108,12 @@
     border-color: var(--border);
   }
 
+  /* the app fills the window and scrolls inside its panes, never as a page */
   html,
   body,
   #app {
     height: 100%;
+    overflow: hidden;
   }
 
   body {
