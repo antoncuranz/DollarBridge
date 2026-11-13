@@ -24,7 +24,7 @@ export function GroupSeparator({
       )}
     >
       {!first && <div className="h-px w-full bg-border" />}
-      <div className="flex items-center justify-between gap-4 px-6 text-[13px] leading-[19px] whitespace-nowrap text-muted-foreground md:pr-6 md:pl-5">
+      <div className="flex items-center justify-between gap-4 px-5 text-sm leading-5 md:text-[13px] md:leading-[19px] whitespace-nowrap text-muted-foreground md:pr-6 md:pl-5">
         <p className="truncate font-medium">{label}</p>
         <div className="flex shrink-0 items-center gap-1.5">
           <p>{info}</p>

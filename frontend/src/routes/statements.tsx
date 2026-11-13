@@ -355,7 +355,7 @@ function StatementsPage() {
           {picker}
         </>
       }
-      mobileTop={<div className="flex flex-col gap-1.5 px-6">{picker}</div>}
+      mobileTop={<div className="flex flex-col gap-1.5 px-5">{picker}</div>}
       header={
         <ListHeader
           title={

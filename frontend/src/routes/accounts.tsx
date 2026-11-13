@@ -13,12 +13,7 @@ import { BankAccountDialog } from "@/components/dialog/BankAccountDialog"
 import { CreditCardDialog } from "@/components/dialog/CreditCardDialog"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
 import { RowAction, Swatch } from "@/components/list/Row"
-import {
-  ListHeader,
-  MobileActions,
-  Rows,
-  Workspace,
-} from "@/components/shell/Workspace"
+import { ListHeader, Rows, Workspace } from "@/components/shell/Workspace"
 import { SidebarHeader } from "@/components/sidebar/AccountFilter"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
 import { Button } from "@/components/ui/button"
@@ -31,14 +26,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ordinal, updateAge } from "@/lib/dates"
 import { formatEur, formatGrouped, formatUsd } from "@/lib/money"
-import { cn } from "@/lib/utils"
+import { cn, possessive } from "@/lib/utils"
 
 export const Route = createFileRoute("/accounts")({
   component: AccountsPage,
 })
-
-const possessive = (name: string) =>
-  name.charAt(0).toUpperCase() + name.slice(1) + "’s "
 
 function Updated({
   timestamp,
@@ -285,7 +277,25 @@ function AccountsPage() {
           {connectionList}
         </>
       }
-      mobileTop={<MobileActions>{addButtons}</MobileActions>}
+      thumb={
+        <>
+          <Button
+            size="fab"
+            aria-label="Add credit card"
+            onClick={() => setEditing({ kind: "card" })}
+          >
+            <Plus />
+          </Button>
+          <Button
+            variant="secondary"
+            size="fab"
+            aria-label="Add bank account"
+            onClick={() => setEditing({ kind: "bank" })}
+          >
+            <Landmark />
+          </Button>
+        </>
+      }
       header={
         <ListHeader
           title="Accounts"
@@ -411,7 +421,7 @@ function AccountsPage() {
 
       <div className="md:hidden">
         <GroupSeparator label="Connections" info={connections.length} />
-        <div className="flex flex-col px-6">{connectionList}</div>
+        <div className="flex flex-col px-5">{connectionList}</div>
       </div>
 
       {editing?.kind === "card" && (

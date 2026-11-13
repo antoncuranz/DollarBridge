@@ -237,11 +237,13 @@ function TransactionsPage() {
             info={formatUsd(totalPosted(others, balances))}
           />
           <AccountFilter
+            showOwner
             accounts={others}
             balances={balances}
             selectedId={null}
           />
           <BankAccountItems
+            showOwner
             bankAccounts={bankAccounts.filter(b => b.user.id !== user.id)}
           />
         </>
@@ -262,19 +264,7 @@ function TransactionsPage() {
         ]}
       />
       <DueCalendarCard />
-      <MobileActions>
-        {selectedCredit ? (
-          <Button size="sm" onClick={() => setCreditSelection(null)}>
-            <Check />
-            Done applying credit
-          </Button>
-        ) : (
-          <>
-            {missingSwitch}
-            {accountActions}
-          </>
-        )}
-      </MobileActions>
+      {!selectedCredit && <MobileActions>{missingSwitch}</MobileActions>}
     </>
   )
 
@@ -283,6 +273,45 @@ function TransactionsPage() {
       sidebar={sidebar}
       mobileTop={mobileTop}
       header={header}
+      thumb={
+        selectedCredit ? (
+          <Button
+            size="fab"
+            aria-label="Done applying credit"
+            onClick={() => setCreditSelection(null)}
+          >
+            <Check />
+          </Button>
+        ) : (
+          account && (
+            <>
+              <Button
+                variant="secondary"
+                size="fab"
+                aria-label="Export to Actual"
+                disabled={actualExport.isPending}
+                onClick={() => actualExport.mutate(account.id)}
+              >
+                <CloudUpload
+                  className={actualExport.isPending ? "animate-pulse" : ""}
+                />
+              </Button>
+              <Button
+                variant="secondary"
+                size="fab"
+                aria-label="Import data"
+                disabled={importData.isPending}
+                onClick={() => importData.mutate(account.id)}
+              >
+                <Download
+                  className={importData.isPending ? "animate-pulse" : ""}
+                />
+              </Button>
+            </>
+          )
+        )
+      }
+      thumbRaised={draftCount > 0 && !selectedCredit}
       footer={
         !selectedCredit && (
           <SaveBar

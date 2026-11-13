@@ -43,7 +43,6 @@ function HeaderActions() {
           <Button
             variant="secondary"
             size="icon"
-            className="max-md:size-11"
             aria-label="Appearance and privacy"
           />
         }
@@ -85,9 +84,9 @@ export function Header() {
   }, [pathname])
 
   return (
-    <header className="flex shrink-0 flex-col gap-1.5 border-b bg-background pt-[max(env(safe-area-inset-top),0.75rem)] md:h-14 md:flex-row md:items-center md:gap-2 md:border-b-0 md:bg-transparent md:pt-0">
-      <div className="flex items-center gap-3 pr-4 pl-6 md:contents">
-        <h1 className="flex-1 text-[28px] leading-10 font-semibold whitespace-nowrap md:flex-none md:text-2xl md:leading-10">
+    <header className="flex h-22 shrink-0 flex-col border-b bg-background pt-2 shadow-sm md:h-14 md:flex-row md:items-center md:gap-2 md:border-b-0 md:bg-transparent md:pt-0 md:shadow-none">
+      <div className="flex items-center gap-2 px-3 md:contents">
+        <h1 className="flex-1 truncate text-2xl leading-10 font-semibold md:flex-none">
           money tracking
         </h1>
         <div className="md:order-last">
@@ -96,7 +95,7 @@ export function Header() {
       </div>
       <nav
         ref={nav}
-        className="no-scrollbar flex gap-7 overflow-x-auto pl-6 md:h-14 md:flex-1 md:items-center md:gap-6 md:pr-10 lg:gap-8"
+        className="no-scrollbar flex flex-1 items-center gap-6 overflow-x-auto pr-10 pl-5 md:h-14 md:pl-6 lg:gap-8"
         style={{
           maskImage:
             "linear-gradient(to right, transparent .0em, black 1em calc(100% - 3em), transparent calc(100% - .0em))",
@@ -106,7 +105,7 @@ export function Header() {
           <Link
             key={tab.to}
             to={tab.to}
-            className="flex shrink-0 items-center border-b-3 border-transparent pt-1 pb-2 text-lg leading-[26px] whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground md:h-14 md:py-0 md:text-base md:leading-14"
+            className="block h-full shrink-0 border-b-3 border-transparent text-base leading-9 whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground md:h-14 md:leading-14"
             activeProps={{
               className: "!border-accent !text-foreground",
             }}
@@ -115,7 +114,6 @@ export function Header() {
             {tab.label}
           </Link>
         ))}
-        <span className="w-2 shrink-0 md:hidden" />
       </nav>
     </header>
   )

@@ -12,6 +12,8 @@ export function Workspace({
   mobileTop,
   header,
   footer,
+  thumb,
+  thumbRaised,
   children,
 }: {
   sidebar: ReactNode
@@ -19,6 +21,10 @@ export function Workspace({
   header: ReactNode
   /** floats at the bottom of the list pane (save bar, FAB) */
   footer?: ReactNode
+  /** mobile: round buttons in thumb reach, replacing the header actions */
+  thumb?: ReactNode
+  /** leaves room below the thumb buttons for the save button */
+  thumbRaised?: boolean
   children: ReactNode
 }) {
   return (
@@ -27,9 +33,9 @@ export function Workspace({
         {sidebar}
       </aside>
       <section className="relative flex min-w-0 flex-1 flex-col">
-        <div className="no-scrollbar flex flex-1 flex-col overflow-y-auto pb-28 md:pt-14 md:pb-24">
+        <div className="no-scrollbar flex flex-1 flex-col overflow-y-auto pt-3 pb-28 md:pt-18 md:pb-24">
           {mobileTop && (
-            <div className="flex flex-col gap-3 pt-4 pb-1 md:hidden">
+            <div className="flex flex-col gap-3 pt-1 pb-1 md:hidden">
               {mobileTop}
             </div>
           )}
@@ -37,6 +43,16 @@ export function Workspace({
         </div>
         {header}
         {footer}
+        {thumb && (
+          <div
+            className={cn(
+              "absolute right-5 z-30 flex flex-col-reverse items-center gap-3 md:hidden",
+              thumbRaised ? "bottom-22" : "bottom-6",
+            )}
+          >
+            {thumb}
+          </div>
+        )}
       </section>
     </div>
   )
@@ -81,7 +97,7 @@ export function ListHeader({
 /** Actions that have no room in the mobile layout's missing list header. */
 export function MobileActions({ children }: { children: ReactNode }) {
   return (
-    <div className="flex items-center justify-end gap-2 px-6 md:hidden">
+    <div className="flex items-center justify-end gap-2 px-5 md:hidden">
       {children}
     </div>
   )
@@ -96,7 +112,7 @@ export function Rows({
 }) {
   return (
     <div
-      className={cn("flex flex-col gap-1.5 px-6 md:gap-1 md:px-4", className)}
+      className={cn("flex flex-col gap-1.5 px-5 md:gap-1 md:px-4", className)}
     >
       {children}
     </div>
@@ -105,7 +121,7 @@ export function Rows({
 
 export function EmptyState({ children }: { children: ReactNode }) {
   return (
-    <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+    <div className="px-5 py-12 text-center text-sm text-muted-foreground">
       {children}
     </div>
   )

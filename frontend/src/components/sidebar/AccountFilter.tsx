@@ -4,7 +4,7 @@ import type { Account, AccountBalances, BankAccount } from "@/types"
 import { Swatch } from "@/components/list/Row"
 import { updateAge } from "@/lib/dates"
 import { formatEur, formatGrouped, formatUsd } from "@/lib/money"
-import { cn } from "@/lib/utils"
+import { cn, possessive } from "@/lib/utils"
 
 export function SidebarHeader({
   title,
@@ -112,11 +112,14 @@ export function AccountFilter({
   balances,
   selectedId,
   onSelect,
+  showOwner,
 }: {
   accounts: Array<Account>
   balances: AccountBalances | undefined
   selectedId: number | null
   onSelect?: (accountId: number | null) => void
+  /** prefix the name with the owner, for other users' accounts */
+  showOwner?: boolean
 }) {
   return (
     <>
@@ -126,7 +129,9 @@ export function AccountFilter({
           <SidebarItem
             key={account.id}
             swatch={<Swatch account={account} />}
-            name={account.name}
+            name={
+              (showOwner ? possessive(account.user.name) : "") + account.name
+            }
             sub={
               <UpdatedLine
                 timestamp={balance?.last_successful_update}
@@ -154,8 +159,10 @@ export function AccountFilter({
 
 export function BankAccountItems({
   bankAccounts,
+  showOwner,
 }: {
   bankAccounts: Array<BankAccount>
+  showOwner?: boolean
 }) {
   return (
     <>
@@ -163,7 +170,10 @@ export function BankAccountItems({
         <SidebarItem
           key={bankAccount.id}
           swatch={<Swatch color="var(--muted)" />}
-          name={bankAccount.name}
+          name={
+            (showOwner ? possessive(bankAccount.user.name) : "") +
+            bankAccount.name
+          }
           sub={
             <UpdatedLine
               timestamp={bankAccount.last_successful_update}
@@ -199,7 +209,7 @@ function AccountCard({
       onClick={onClick}
       className={cn(
         "redactable flex w-[148px] shrink-0 flex-col gap-0.5 rounded-2xl border bg-card px-3 py-2.5 text-left drop-shadow-[0_2px_1px_rgb(0_0_0/0.04)]",
-        selected && "border-accent ring-1 ring-accent",
+        selected && "border-accent shadow-[inset_0_0_0_1px_var(--accent)]",
       )}
     >
       <span className="flex w-full items-center gap-2">
@@ -239,7 +249,7 @@ export function AccountCards({
   allLines: Array<ReactNode>
 }) {
   return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto px-6 pb-1">
+    <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-1">
       <AccountCard
         selected={selectedId == null}
         onClick={() => onSelect(null)}

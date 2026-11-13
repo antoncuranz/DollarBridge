@@ -28,7 +28,7 @@ export function StatTile({
 /** Mobile: tiles swipe sideways above the list. */
 export function StatTileStrip({ children }: { children: ReactNode }) {
   return (
-    <div className="no-scrollbar flex gap-2 overflow-x-auto px-6 pb-1 [&>*]:min-w-[220px]">
+    <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-1 [&>*]:min-w-[220px]">
       {children}
     </div>
   )

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Check, Link as LinkIcon, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
 
 import type { Exchange, Payment } from "@/types"
 import {
@@ -25,7 +24,6 @@ import { RowMenu } from "@/components/list/RowMenu"
 import {
   EmptyState,
   ListHeader,
-  MobileActions,
   Rows,
   Workspace,
 } from "@/components/shell/Workspace"
@@ -135,13 +133,7 @@ function ExchangesPage() {
   const thisMonth = exchanges.filter(e => e.date.startsWith(month)).length
 
   function selectPayment(payment: Payment) {
-    if (!selected) {
-      toast.info("Pick an exchange first", {
-        description:
-          "Use the link icon on an exchange, then choose the payment.",
-      })
-      return
-    }
+    if (!selected) return
     if (selected.cashback_transaction_id == null) {
       setApplyTo(payment)
       return
@@ -303,12 +295,7 @@ function ExchangesPage() {
                 <Check />
               </RowAction>
             ) : (
-              <RowAction
-                label="Apply an exchange"
-                onClick={() => selectPayment(payment)}
-              >
-                <LinkIcon />
-              </RowAction>
+              <span className="w-7 shrink-0" />
             )
           }
         />
@@ -346,8 +333,28 @@ function ExchangesPage() {
               <Summary />
             </StatTileStrip>
           )}
-          <MobileActions>{addButton}</MobileActions>
         </>
+      }
+      thumb={
+        selected ? (
+          <Button
+            size="fab"
+            aria-label="Done applying exchange"
+            onClick={() => setExchangeSelection(null)}
+          >
+            <Check />
+          </Button>
+        ) : (
+          user.super_user && (
+            <Button
+              size="fab"
+              aria-label="Add exchange"
+              onClick={() => setAdding(true)}
+            >
+              <Plus />
+            </Button>
+          )
+        )
       }
       header={
         selected ? (

@@ -119,6 +119,9 @@ function ArchivePage() {
 
   const monthNavigation = (
     <div className="flex items-center gap-2">
+      <span className="pr-1 text-sm font-medium whitespace-nowrap md:hidden">
+        {formatMonth(month)}
+      </span>
       <Button
         variant="secondary"
         size="icon"
@@ -127,9 +130,6 @@ function ArchivePage() {
       >
         <ChevronLeft />
       </Button>
-      <span className="text-sm font-medium whitespace-nowrap md:hidden">
-        {formatMonth(month)}
-      </span>
       <Button
         variant="secondary"
         size="icon"
@@ -178,8 +178,8 @@ function ArchivePage() {
       }
       mobileTop={
         <>
-          <div className="px-6">{summary}</div>
-          <div className="no-scrollbar flex gap-2 overflow-x-auto px-6">
+          <div className="px-5">{summary}</div>
+          <div className="no-scrollbar flex gap-2 overflow-x-auto px-5">
             <button
               type="button"
               onClick={() => setSearch({ account: undefined })}

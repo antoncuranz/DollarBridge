@@ -58,12 +58,12 @@ export function SaveBar({
       <button
         type="button"
         aria-label={saveLabel}
-        className="absolute right-6 bottom-8 flex size-[60px] items-center justify-center rounded-full bg-primary text-primary-foreground drop-shadow-[0_8px_10px_rgb(0_0_0/0.22)] transition-transform active:scale-95 disabled:opacity-60 md:hidden"
+        className="absolute right-5 bottom-6 z-30 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 disabled:opacity-60 md:hidden"
         disabled={saving}
         onClick={onSave}
       >
         <Save className="size-6" />
-        <span className="absolute -top-1 left-10 flex h-[22px] items-center justify-center rounded-full border-2 border-card bg-accent px-1.5 text-xs leading-[17px] font-semibold text-accent-foreground">
+        <span className="absolute -top-1.5 left-8 flex h-[22px] items-center justify-center rounded-full border-2 border-card bg-accent px-1.5 text-xs leading-[17px] font-semibold text-accent-foreground">
           {count}
         </span>
       </button>

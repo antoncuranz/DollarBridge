@@ -277,7 +277,7 @@ export function DueCalendarCard() {
   )
 
   return (
-    <div className="mx-6 flex flex-col gap-0.5 rounded-2xl border bg-card px-2.5 pt-1.5 pb-2.5 shadow-[0_2px_2px_0_rgb(0_0_0/0.04)]">
+    <div className="mx-5 flex flex-col gap-0.5 rounded-2xl border bg-card px-2.5 pt-1.5 pb-2.5 shadow-[0_2px_2px_0_rgb(0_0_0/0.04)]">
       <div className="flex h-10 items-center gap-2 pr-1 pl-1.5">
         <p className="flex-1 text-base leading-[23px] font-semibold">
           {expanded ? formatMonth(month) : "This week"}
