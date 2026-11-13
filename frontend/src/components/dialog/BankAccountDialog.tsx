@@ -1,102 +1,116 @@
-import {Button} from "@/components/ui/button.tsx";
-import {Dialog, DialogFooter, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {useEffect, useState} from "react";
-import {Input} from "@/components/ui/input.tsx";
-import {BankAccount, PlaidConnection} from "@/types.ts";
-import {useToast} from "@/components/ui/use-toast.ts";
-import PlaidAccountSelector from "@/components/dialog/PlaidAccountSelector.tsx";
-import {useUser} from "@/components/provider/UserProvider.tsx";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Check } from "lucide-react"
+import { useId, useRef } from "react"
+import { Controller, useForm } from "react-hook-form"
+import { z } from "zod"
 
-export default function BankAccountDialog({
-  open, onClose, connections, bank_account
+import { Dialog, Field } from "./Dialog"
+import { PlaidAccountSelect } from "./PlaidAccountSelect"
+import type { BankAccount, PlaidConnection } from "@/types"
+import { useSaveBankAccount } from "@/api/mutations"
+import { useUser } from "@/api/useUser"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+
+const schema = z.object({
+  name: z.string().trim().min(1, "Required"),
+  institution: z.string().trim().min(1, "Required"),
+  plaid_account_id: z.number().nullable(),
+})
+
+type Values = z.infer<typeof schema>
+
+/** Edits a bank account, or adds one when none is given. */
+export function BankAccountDialog({
+  bankAccount,
+  connections,
+  onClose,
 }: {
-  open: boolean,
-  onClose: (needsUpdate: boolean) => void,
-  connections: PlaidConnection[],
-  bank_account?: BankAccount | null
+  bankAccount?: BankAccount
+  connections: Array<PlaidConnection>
+  onClose: () => void
 }) {
-  const [name, setName] = useState("")
-  const [institution, setInstitution] = useState("")
-  const [icon, setIcon] = useState("")
-  const [plaidAccountId, setPlaidAccountId] = useState<number|null>(null)
+  const user = useUser()
+  const id = useId()
+  const mutation = useSaveBankAccount(bankAccount?.id)
 
-  const { toast } = useToast();
-  const { username } = useUser()
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: bankAccount?.name ?? "",
+      institution: bankAccount?.institution ?? "",
+      plaid_account_id: bankAccount?.plaid_account_id ?? null,
+    },
+  })
 
-  function getUsername() {
-    return bank_account?.user.name ?? username
-  }
-  
-  useEffect(() => {
-    setName(bank_account?.name ?? "")
-    setInstitution(bank_account?.institution ?? "")
-    setIcon(bank_account?.icon ?? "")
-    setPlaidAccountId(bank_account?.plaid_account_id ?? null)
-  }, [bank_account])
-
-  async function onSaveButtonClick() {
-    const url = bank_account ? "/api/bank_accounts/" + bank_account.id : "/api/bank_accounts"
-    const method = bank_account ? "PUT" : "POST"
-    
-    const response = await fetch(url, {
-      method: method,
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        name: name,
-        institution: institution,
-        icon: icon.length > 0 ? icon : null,
-        plaid_account_id: plaidAccountId
-      })
-    })
-
-    if (response.ok)
-      onClose(true)
-    else toast({
-      title: "Error creating BankAccount",
-      description: response.statusText
-    })
-  }
+  // Enter in the form can fire again while the save is still running
+  const saving = useRef(false)
+  const submit = handleSubmit(async values => {
+    if (saving.current) return
+    saving.current = true
+    try {
+      await mutation.mutateAsync(values)
+      onClose()
+    } catch {
+      // already toasted by the mutation
+    } finally {
+      saving.current = false
+    }
+  })
 
   return (
-    <Dialog open={open} onOpenChange={open => !open ? onClose(false) : {}}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{bank_account ? "Edit" : "Add"} Bank Account</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4 overflow-y-auto">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value={name} onChange={e => setName(e.target.value)}
-                   placeholder="" className="col-span-3"/>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="institution" className="text-right">
-              Institution
-            </Label>
-            <Input id="institution" value={institution} onChange={e => setInstitution(e.target.value)}
-                   placeholder="" className="col-span-3"/>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="icon" className="text-right">
-              Icon
-            </Label>
-            <Input id="icon" value={icon} onChange={e => setIcon(e.target.value)}
-                   placeholder="" className="col-span-3"/>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="color" className="text-right">
-              Plaid Connection
-            </Label>
-            <PlaidAccountSelector connections={connections} username={getUsername()} value={plaidAccountId} onValueChange={setPlaidAccountId}/>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit" onClick={onSaveButtonClick}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
+    <Dialog
+      open
+      onClose={onClose}
+      title={bankAccount ? "Edit bank account" : "Add bank account"}
+      footer={
+        <Button
+          size="lg"
+          className="flex-1 rounded-full"
+          disabled={mutation.isPending}
+          onClick={() => void submit()}
+        >
+          <Check />
+          {mutation.isPending ? "Saving…" : "Save"}
+        </Button>
+      }
+    >
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={event => void submit(event)}
+      >
+        <Field label="Name" htmlFor={id + "name"} error={errors.name?.message}>
+          <Input id={id + "name"} autoFocus {...register("name")} />
+        </Field>
+        <Field
+          label="Institution"
+          htmlFor={id + "institution"}
+          error={errors.institution?.message}
+        >
+          <Input id={id + "institution"} {...register("institution")} />
+        </Field>
+        <Field label="Plaid connection" htmlFor={id + "plaid"}>
+          <Controller
+            control={control}
+            name="plaid_account_id"
+            render={({ field }) => (
+              <PlaidAccountSelect
+                id={id + "plaid"}
+                connections={connections}
+                userId={bankAccount?.user.id ?? user.id}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        </Field>
+        <button type="submit" className="hidden" />
+      </form>
     </Dialog>
   )
 }

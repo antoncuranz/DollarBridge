@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 from typing import Annotated, Iterable, List
 
@@ -23,8 +24,9 @@ class PaymentService:
         self.exchange_service = exchange_service
         self.data_export = data_export
     
-    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None):
-        payments = self.store.get_payments(session, user, account_id, processed)
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None,
+                     date_from: datetime.date | None = None, date_to: datetime.date | None = None):
+        payments = self.store.get_payments(session, user, account_id, processed, date_from, date_to)
 
         def map_payment(payment: Payment):
             return PaymentWithAmounts.model_validate(payment, update={

@@ -60,6 +60,9 @@ def test_import_transactions(mocker, session: Session):
     assert transactions[1].status == Transaction.Status.POSTED.value
     assert transactions[2].amount_usd == 1234
     assert transactions[2].status == Transaction.Status.PENDING.value
+    # the posting date is only known once a transaction has posted
+    assert transactions[0].posted_date == datetime.date(2025, 1, 1)
+    assert transactions[2].posted_date is None
 
 
 def test_pending_transactions(mocker, session: Session):

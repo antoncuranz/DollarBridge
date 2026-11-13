@@ -55,7 +55,6 @@ class BankAccount(SQLModel, table=True):
     accounts: List["Account"] = Relationship()
     name: str
     institution: str
-    icon: str | None = None
     balance: int = 0
     import_id: str | None = None  # TODO: remove once migrated to plaid
     plaid_account_id: int | None = Field(default=None, foreign_key="plaidaccount.id", ondelete="SET NULL")
@@ -74,9 +73,9 @@ class Account(SQLModel, table=True):
     plaid_account: PlaidAccount | None = Relationship()
     name: str
     institution: str
+    issuer: str | None = None  # dates.business.issuer_rules.Issuer
     due_day: int | None = None
     autopay_offset: int | None = None
-    icon: str | None = None
     color: str | None = None
     target_spend: int | None = None
     active: bool = True
@@ -150,6 +149,7 @@ class TransactionBase(SQLModel):
     import_id: str = Field(unique=True)
     actual_id: str | None = None
     date: datetime.date = Field(default_factory=datetime.date.today)
+    posted_date: datetime.date | None = None  # decides which statement it belongs to
     counterparty: str
     description: str
     category: str | None = None
@@ -195,6 +195,7 @@ class Credit(SQLModel, table=True):
     account: Account = Relationship()
     import_id: str = Field(unique=True)
     date: datetime.date = Field(default_factory=datetime.date.today)
+    posted_date: datetime.date | None = None
     counterparty: str
     description: str
     category: str | None = None

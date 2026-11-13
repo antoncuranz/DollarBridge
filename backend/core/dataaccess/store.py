@@ -41,12 +41,12 @@ class Store:
         return self.account_repository.get_account(session, user, account_id)
 
     def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: str | None,
-                       plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
-                       autopay_offset: int | None, icon: str | None, color: str | None, target_spend: int | None,
+                       plaid_account_id: int | None, name: str, institution: str, issuer: str | None, due_day: int | None,
+                       autopay_offset: int | None, color: str | None, target_spend: int | None,
                        active: bool = True) -> Account:
         return self.account_repository.create_account(session, user, bank_account_id=bank_account_id, actual_id=actual_id,
-                          plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
-                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
+                          plaid_account_id=plaid_account_id, name=name, institution=institution, issuer=issuer, due_day=due_day,
+                          autopay_offset=autopay_offset, color=color, target_spend=target_spend,
                           active=active)
 
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
@@ -58,8 +58,8 @@ class Store:
     def get_bank_account(self, session: Session, user: User, bank_account_id: int) -> Optional[BankAccount]:
         return self.account_repository.get_bank_account(session, user, bank_account_id)
 
-    def create_bank_account(self, session: Session, user: User, name: str, institution: str, icon: str | None, plaid_account_id: int | None) -> BankAccount:
-        return self.account_repository.create_bank_account(session, user, name=name, institution=institution, icon=icon, plaid_account_id=plaid_account_id)
+    def create_bank_account(self, session: Session, user: User, name: str, institution: str, plaid_account_id: int | None) -> BankAccount:
+        return self.account_repository.create_bank_account(session, user, name=name, institution=institution, plaid_account_id=plaid_account_id)
 
     #### TRANSACTIONS ####
     
@@ -69,8 +69,12 @@ class Store:
     def get_transaction_account_id(self, session: Session, tx_id: int) -> int | None:
         return self.transaction_repository.get_transaction_account_id(session, tx_id)
 
-    def get_transactions(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None) -> List[Transaction]:
-        return self.transaction_repository.get_transactions(session, user, account_id, paid)
+    def get_transactions_by_ids(self, session: Session, tx_ids: List[int]) -> List[Transaction]:
+        return self.transaction_repository.get_transactions_by_ids(session, tx_ids)
+
+    def get_transactions(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None,
+                         paid_from: datetime.date | None = None, paid_to: datetime.date | None = None) -> List[Transaction]:
+        return self.transaction_repository.get_transactions(session, user, account_id, paid, paid_from, paid_to)
 
     def get_paid_transactions_by_payment(self, session: Session, payment_id: int) -> List[Transaction]:
         return self.transaction_repository.get_paid_transactions_by_payment(session, payment_id)
@@ -96,16 +100,22 @@ class Store:
     def get_balance_pending(self, session: Session) -> int:
        return self.transaction_repository.get_balance_pending(session)
     
-    def get_fees_and_risk_eur(self, session: Session) -> int:
-        return self.transaction_repository.get_fees_and_risk_eur(session)
+    def get_fees_and_risk_eur(self, session: Session, paid_from: datetime.date | None = None,
+                              paid_to: datetime.date | None = None) -> int:
+        return self.transaction_repository.get_fees_and_risk_eur(session, paid_from, paid_to)
+
+    def get_paid_amount_eur(self, session: Session, paid_from: datetime.date | None = None,
+                            paid_to: datetime.date | None = None) -> int:
+        return self.transaction_repository.get_paid_amount_eur(session, paid_from, paid_to)
 
     #### PAYMENTS ####
 
     def get_payment_unsafe(self, session: Session, payment_id: int) -> Optional[Payment]:
         return self.payment_repository.get_payment_unsafe(session, payment_id)
 
-    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None) -> List[Payment]:
-        return self.payment_repository.get_payments(session, user, account_id, processed)
+    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None,
+                     date_from: datetime.date | None = None, date_to: datetime.date | None = None) -> List[Payment]:
+        return self.payment_repository.get_payments(session, user, account_id, processed, date_from, date_to)
 
     def get_unprocessed_payment(self, session: Session, payment_id: int) -> Optional[Payment]:
         return self.payment_repository.get_unprocessed_payment(session, payment_id)

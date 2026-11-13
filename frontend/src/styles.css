@@ -1,0 +1,178 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./fonts/index.css" layer(base);
+@import "@fontsource/redacted-script" layer(base);
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Open Runde", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--field);
+  --color-field: var(--field);
+  --color-placeholder: var(--placeholder);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--on-primary);
+  --color-primary-muted: var(--on-primary-muted);
+  --color-secondary: var(--surface);
+  --color-secondary-hover: var(--hover);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--hover);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: #ffffff;
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-destructive: var(--destructive);
+
+  --radius-field: 8px;
+  --radius-day: 10px;
+  --radius-row: 12px;
+  --radius-bar: 16px;
+  --radius-pane: 24px;
+
+  --shadow-row: 0 1px 1px 0 var(--shadow-row-color);
+  --shadow-pane:
+    0 20px 25px -5px var(--shadow-pane-color),
+    0 8px 10px -6px var(--shadow-pane-color);
+  --shadow-bar: 0 8px 20px -4px rgb(0 0 0 / 0.18);
+  --shadow-focus: 0 0 0 3px var(--focus-ring);
+}
+
+@layer base {
+  :root {
+    --background: #f6f8fa;
+    --foreground: #09090b;
+    --surface: #ffffff;
+    --border: #e4e4e7;
+    --muted: #71717a;
+    --hover: #f4f4f5;
+    --accent: #0284c7;
+    --accent-soft: #eff8ff;
+    --warning: #996214;
+    --warning-soft: #fff8e8;
+    --success: #238154;
+    --success-soft: #edf8f0;
+    --destructive: #dc2626;
+    --placeholder: #a1a1aa;
+    --field: #fafafa;
+    --primary: #18181b;
+    --primary-hover: #27272a;
+    --on-primary: #ffffff;
+    --on-primary-muted: #a1a1aa;
+    --ring: #0284c7;
+    --focus-ring: rgb(2 132 199 / 0.18);
+    --shadow-row-color: rgb(0 0 0 / 0.05);
+    --shadow-pane-color: rgb(0 0 0 / 0.1);
+  }
+
+  .dark {
+    --background: #000000;
+    --foreground: #fafafa;
+    --surface: #0b0b0c;
+    --border: #27272a;
+    --muted: #a1a1aa;
+    --hover: #18181b;
+    --accent: #4ba3e3;
+    --accent-soft: #0d2235;
+    --warning: #fbbf24;
+    --warning-soft: #2a1f08;
+    --success: #4ade80;
+    --success-soft: #0f2417;
+    --destructive: #f87171;
+    --placeholder: #71717a;
+    --field: #18181b;
+    --primary: #fafafa;
+    --primary-hover: #e4e4e7;
+    --on-primary: #09090b;
+    --on-primary-muted: #71717a;
+    --ring: #4ba3e3;
+    --focus-ring: rgb(75 163 227 / 0.25);
+    --shadow-row-color: rgb(255 255 255 / 0.04);
+    --shadow-pane-color: rgb(255 255 255 / 0.05);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  /* the app fills the window and scrolls inside its panes, never as a page */
+  html,
+  body,
+  #app {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    touch-action: pan-x pan-y;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  /* Base UI portals need an isolated stacking context */
+  .root {
+    isolation: isolate;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* privacy mode: amounts and names are unreadable until hovered */
+  .privacy .redactable:not(:hover) {
+    font-family: "Redacted Script", var(--font-sans);
+  }
+
+  /* pane header progressive blur, as in kompass */
+  .pane-header-blur {
+    position: absolute;
+    inset: 0;
+    bottom: -2rem;
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(to bottom, black, black, transparent);
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.8) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .dark .pane-header-blur {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.8) 0%,
+      transparent 100%
+    );
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}

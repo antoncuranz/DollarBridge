@@ -1,169 +1,112 @@
-import {Button} from "@/components/ui/button.tsx";
-import {Dialog, DialogFooter, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.tsx";
-import {Calendar} from "@/components/ui/calendar.tsx";
-import {CalendarIcon} from "lucide-react";
-import {useState} from "react";
 import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import {useToast} from "@/components/ui/use-toast.ts";
-import AmountInput from "@/components/dialog/AmountInput.tsx";
+import { Check } from "lucide-react"
+import { useState } from "react"
 
-interface Props {
-  open: boolean,
-  onClose: (needsUpdate: boolean) => void,
-}
+import {
+  AmountField,
+  ComputedField,
+  DateField,
+  Dialog,
+  FieldRow,
+  useInvalidFields,
+} from "./Dialog"
+import { useCreateExchange } from "@/api/mutations"
+import { Button } from "@/components/ui/button"
+import { exchangeAmountEur } from "@/lib/derive"
+import { formatAmount, formatGrouped } from "@/lib/money"
 
-const ExchangeDialog = ({open, onClose}: Props) => {
-  const [date, setDate] = useState<Date>()
-  const [amountUsd, setAmountUsd] = useState<number|null>(null)
-  const [paidEur, setPaidEur] = useState<number|null>(null)
-  const [exchangeRate, setExchangeRate] = useState<number|null>(null)
+/** Adds a USD exchange. EUR amount and fees are derived and shown read-only. */
+export function ExchangeDialog({ onClose }: { onClose: () => void }) {
+  const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"))
+  const [amountUsd, setAmountUsd] = useState<number | null>(null)
+  const [rate, setRate] = useState<number | null>(null)
+  const [paidEur, setPaidEur] = useState<number | null>(null)
+  const { anyInvalid, track } = useInvalidFields()
 
-  const { toast } = useToast();
+  const amountEur =
+    amountUsd != null && rate ? exchangeAmountEur(amountUsd, rate) : null
+  const fees = amountEur != null && paidEur != null ? paidEur - amountEur : null
+  const complete =
+    date !== "" &&
+    amountUsd != null &&
+    amountUsd > 0 &&
+    rate != null &&
+    rate > 0 &&
+    paidEur != null &&
+    paidEur >= 0 &&
+    !anyInvalid
 
-  async function onSaveButtonClick() {
-    const response = await fetch("/api/exchanges", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        date: getDateString(date!),
-        amount_usd: amountUsd,
-        paid_eur: paidEur,
-        exchange_rate: exchangeRate
-      })
-    })
+  const mutation = useCreateExchange()
 
-    if (response.ok)
-      onClose(true)
-    else toast({
-      title: "Error creating Exchange",
-      description: response.statusText
-    })
-  }
-
-  function getDateString(date: Date) {
-    const offset = date.getTimezoneOffset()
-    const offsetDate = new Date(date.getTime() - (offset*60*1000))
-    return offsetDate.toISOString().split('T')[0]
-  }
-
-  function getAmountEur() {
-    if (!amountUsd || !exchangeRate)
-      return 0;
-
-    const exchangeRateFloat = exchangeRate / 10000000
-    return parseInt((amountUsd / exchangeRateFloat).toFixed(2))
-  }
-
-  function getFeesEur() {
-    if (!paidEur || !amountUsd || !exchangeRate)
-      return 0;
-
-    return paidEur - getAmountEur()
+  function save() {
+    if (!complete) return
+    mutation.mutate(
+      { date, amount_usd: amountUsd, paid_eur: paidEur, exchange_rate: rate },
+      { onSuccess: onClose },
+    )
   }
 
   return (
-    <Dialog open={open} onOpenChange={open => !open ? onClose(false) : {}}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add Exchange</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4 overflow-y-auto">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">
-              Date
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "col-span-3 justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4"/>
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount_usd" className="text-right">
-              Amount (USD)
-            </Label>
-            <AmountInput
-              id="amount_usd"
-              className="col-span-3"
-              amount={amountUsd}
-              updateAmount={setAmountUsd}
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="rate" className="text-right">
-              Exchange Rate (IBKR)
-            </Label>
-            <AmountInput
-              id="rate"
-              className="col-span-3"
-              amount={exchangeRate}
-              updateAmount={setExchangeRate}
-              decimals={7}
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount_eur" className="text-right">
-              Amount (EUR)
-            </Label>
-            <AmountInput
-              id="fees_eur"
-              className="col-span-3"
-              amount={getAmountEur()}
-              updateAmount={() => {
-              }}
-              disabled
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount_eur" className="text-right">
-              Paid (EUR)
-            </Label>
-            <AmountInput
-              id="amount_eur"
-              className="col-span-3"
-              amount={paidEur}
-              updateAmount={setPaidEur}
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount_eur" className="text-right">
-              Fees (EUR)
-            </Label>
-            <AmountInput
-              id="fees_eur"
-              className="col-span-3"
-              amount={getFeesEur()}
-              updateAmount={() => {
-              }}
-              disabled
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit" onClick={onSaveButtonClick}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
+    <Dialog
+      open
+      onClose={onClose}
+      title="Add exchange"
+      footer={
+        <Button
+          size="lg"
+          className="flex-1 rounded-full"
+          disabled={!complete || mutation.isPending}
+          onClick={save}
+        >
+          <Check />
+          {mutation.isPending ? "Saving…" : "Save"}
+        </Button>
+      }
+    >
+      <FieldRow>
+        <DateField label="Date" value={date} onChange={setDate} />
+        <AmountField
+          label="Amount (USD)"
+          format="usd"
+          autoFocus
+          value={amountUsd}
+          onChange={setAmountUsd}
+          onInvalidChange={track("amountUsd")}
+        />
+      </FieldRow>
+      <FieldRow>
+        <AmountField
+          label="Exchange rate (IBKR)"
+          format="rate"
+          placeholder="1.0820"
+          value={rate}
+          onChange={setRate}
+          onInvalidChange={track("rate")}
+        />
+        <ComputedField
+          label="Amount (EUR)"
+          prefix="€"
+          hint={
+            amountUsd != null && rate
+              ? `= ${formatGrouped(amountUsd)} ÷ ${(rate / 1e7).toString()}`
+              : "= Amount (USD) ÷ rate"
+          }
+        >
+          {amountEur != null ? formatAmount(amountEur) : "–"}
+        </ComputedField>
+      </FieldRow>
+      <FieldRow>
+        <AmountField
+          label="Paid (EUR)"
+          format="eur"
+          value={paidEur}
+          onChange={setPaidEur}
+          onInvalidChange={track("paidEur")}
+        />
+        <ComputedField label="Fees (EUR)" prefix="€" hint="= Paid − Amount">
+          {fees != null ? formatAmount(fees) : "–"}
+        </ComputedField>
+      </FieldRow>
     </Dialog>
   )
 }
-
-export default ExchangeDialog

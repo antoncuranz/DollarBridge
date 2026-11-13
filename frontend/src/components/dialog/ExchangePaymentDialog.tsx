@@ -1,79 +1,144 @@
-import {Button} from "@/components/ui/button.tsx";
-import {Dialog, DialogFooter, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {useEffect, useState} from "react";
-import {useToast} from "@/components/ui/use-toast.ts";
-import {Payment} from "@/types.ts";
-import AmountInput from "@/components/dialog/AmountInput.tsx";
+import { ArrowLeftRight, Check } from "lucide-react"
+import { useState } from "react"
 
-interface Props {
-  open: boolean,
-  onClose: (needsUpdate: boolean) => void,
-  payment: Payment,
-  exchange: number,
-}
+import {
+  AmountField,
+  ContextBox,
+  ContextLine,
+  Dialog,
+  useInvalidFields,
+} from "./Dialog"
+import type { Account, Exchange, Payment } from "@/types"
+import { useApplyExchange } from "@/api/mutations"
+import { Swatch } from "@/components/list/Row"
+import { Button } from "@/components/ui/button"
+import { formatShortDay } from "@/lib/dates"
+import {
+  exchangeAmountEurShare,
+  exchangeRemainder,
+  paymentRemainder,
+} from "@/lib/derive"
+import { formatAmount, formatRate, formatUsd } from "@/lib/money"
 
-const ExchangePaymentDialog = ({open, onClose, payment, exchange}: Props) => {
-  const [amount, setAmount] = useState<number|null>(null)
+/** Allocates part of an exchange to a payment. */
+export function ExchangePaymentDialog({
+  exchange,
+  payment,
+  account,
+  onClose,
+}: {
+  exchange: Exchange
+  payment: Payment
+  account?: Account
+  onClose: () => void
+}) {
+  const existing =
+    payment.exchanges.find(ep => ep.exchange_id === exchange.id)?.amount ?? 0
+  const exchangeLeft = exchangeRemainder(exchange) + existing
+  const paymentOpen = paymentRemainder(payment) + existing
+  const maximum = Math.max(Math.min(exchangeLeft, paymentOpen), 0)
 
-  const { toast } = useToast();
+  const [amount, setAmount] = useState<number | null>(
+    existing > 0 ? existing : maximum,
+  )
+  const applied = amount ?? 0
+  const tooMuch = applied > maximum || applied < 0
+  const { anyInvalid, track } = useInvalidFields()
+  const mutation = useApplyExchange()
 
-  useEffect(() => {
-    initData()
-  }, [payment]);
-  async function initData() {
-    if (!payment)
-      return
-
-    const ep = payment.exchanges.find(ep => ep.exchange_id == exchange)
-    setAmount(ep ? ep["amount"] : null)
+  function save() {
+    if (tooMuch || anyInvalid) return
+    mutation.mutate(
+      { exchangeId: exchange.id, paymentId: payment.id, amount: applied },
+      { onSuccess: onClose },
+    )
   }
 
-  function onClearButtonClick() {
-    updateExchangePayment(0)
-  }
-
-  function onSaveButtonClick() {
-    updateExchangePayment(amount ?? 0)
-  }
-
-  async function updateExchangePayment(newAmount: number) {
-    const url = "/api/exchanges/" + exchange + "?amount=" + newAmount + "&payment=" + payment["id"]
-    const response = await fetch(url, {method: "PUT"})
-    if (response.ok)
-      onClose(true)
-    else toast({
-      title: "Error updating ExchangePayment",
-      description: response.statusText
-    })
-  }
+  const stillOpen = paymentOpen - applied
+  const eurShare = exchangeAmountEurShare(exchange, applied)
 
   return (
-    <Dialog open={open} onOpenChange={open => !open ? onClose(false) : {}}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Apply Exchange to Payment</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="amount_eur" className="text-right">
-              Amount
-            </Label>
-            <AmountInput
-              id="amount_eur"
-              className="col-span-3"
-              amount={amount}
-              updateAmount={setAmount}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClearButtonClick}>Clear</Button>
-          <Button type="submit" onClick={onSaveButtonClick}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
+    <Dialog
+      open
+      onClose={onClose}
+      title="Apply exchange to payment"
+      footer={
+        <>
+          {existing > 0 && (
+            <Button
+              size="lg"
+              variant="secondary"
+              className="rounded-full"
+              disabled={mutation.isPending}
+              onClick={() =>
+                mutation.mutate(
+                  { exchangeId: exchange.id, paymentId: payment.id, amount: 0 },
+                  { onSuccess: onClose },
+                )
+              }
+            >
+              Clear
+            </Button>
+          )}
+          <Button
+            size="lg"
+            className="flex-1 rounded-full"
+            disabled={tooMuch || anyInvalid || mutation.isPending}
+            onClick={save}
+          >
+            <Check />
+            {mutation.isPending ? "Saving…" : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <ContextBox>
+        <ContextLine
+          leading={
+            <ArrowLeftRight className="size-4 shrink-0 text-muted-foreground" />
+          }
+          title={`Exchange ${formatShortDay(exchange.date)}`}
+          detail={`${formatUsd(exchange.amount_usd)} @ ${formatRate(exchange.exchange_rate)} · ${formatUsd(exchangeLeft)} left`}
+        />
+        <ContextLine
+          leading={<Swatch account={account} />}
+          title={[account?.name, payment.counterparty]
+            .filter(Boolean)
+            .join(" · ")}
+          detail={`${formatShortDay(payment.date)} · ${formatUsd(paymentOpen)} open`}
+        />
+      </ContextBox>
+
+      <AmountField
+        label="Amount (USD)"
+        format="usd"
+        autoFocus
+        value={amount}
+        onChange={setAmount}
+        onInvalidChange={track("amount")}
+        hint={
+          tooMuch ? (
+            <span className="text-destructive">
+              At most {formatUsd(maximum)} can be applied here
+            </span>
+          ) : (
+            <span className={stillOpen === 0 ? "text-success" : undefined}>
+              {stillOpen === 0
+                ? "Covers the payment fully"
+                : `${formatUsd(stillOpen)} of the payment stays open`}
+              {" · "}
+              {formatUsd(exchangeLeft - applied)} of this exchange left
+              afterwards
+            </span>
+          )
+        }
+      />
+
+      {eurShare != null && (
+        <p className="text-[13px] leading-[17px] text-muted-foreground">
+          ≈ € {formatAmount(eurShare)} at this exchange’s rate
+        </p>
+      )}
     </Dialog>
   )
 }
-
-export default ExchangePaymentDialog

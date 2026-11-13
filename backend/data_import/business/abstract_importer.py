@@ -55,13 +55,19 @@ class AbstractImporter(ABC):
             plaid_tx["transaction_id"], plaid_tx["date"], plaid_tx["name"], plaid_tx["amount"]
         )
             
+    def _posted_date(self, tx):
+        """The day the transaction posted on the card, if the source knows it."""
+        return None
+
     def _process_transaction(self, session: Session, account: Account, tx) -> Transaction:
         args = self._make_transaction_args(tx, account.id)
+        args["posted_date"] = self._posted_date(tx)
         model, _ = self.repository.get_or_create_transaction(session, args["import_id"], args)
         return model
 
     def _process_credit(self, session: Session, account: Account, tx) -> Credit:
         args = self._make_transaction_args(tx, account.id)
+        args["posted_date"] = self._posted_date(tx)
         model, _ = self.repository.get_or_create_credit(session, args["import_id"], args)
         return model
 

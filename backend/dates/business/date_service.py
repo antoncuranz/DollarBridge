@@ -1,11 +1,22 @@
+import calendar
 import datetime
-from typing import Annotated
+from dataclasses import dataclass
+from typing import Annotated, List
 
 from fastapi import Depends
 from sqlmodel import Session
 
+from dates.business.issuer_rules import rule_for
 from dates.dataaccess.dates_repository import DatesRepository
 from models import Account, User
+
+
+@dataclass(frozen=True)
+class Cycle:
+    """One billing cycle of a credit card."""
+    due_date: datetime.date        # the due date printed on the statement
+    payment_date: datetime.date    # the day autopay posts on the card
+    statement_date: datetime.date  # the day the statement closes
 
 
 class DateService:
@@ -13,65 +24,66 @@ class DateService:
         self.repository = repository
 
     def get_dates(self, session: Session, user: User, year: int, month: int):
-        selected_month = datetime.date(year, month, 1)
-
+        """Payment and statement dates of every account that fall into the given month."""
         result = {}
         accounts = self.repository.get_all_accounts(session) if user.super_user else self.repository.get_accounts_of_user(session, user)
         for account in accounts:
             if account.due_day is None:
                 continue
 
-            result[account.id] = dict(color=(account.color if account.color else "black"))
-            result[account.id]["statement"] = self.get_statement_date(account, selected_month).isoformat()
-            result[account.id]["due"] = self.get_due_date(account, selected_month).isoformat()
+            in_month = lambda date: date.year == year and date.month == month  # noqa: E731
+            cycles = self._cycles_around(account, datetime.date(year, month, 1))
+            result[account.id] = dict(
+                color=(account.color if account.color else "black"),
+                statement=[c.statement_date.isoformat() for c in cycles if in_month(c.statement_date)],
+                due=[c.payment_date.isoformat() for c in cycles if in_month(c.payment_date)],
+            )
 
         return result
 
-    def get_statement_date(self, account: Account, selected_month: datetime.date) -> datetime.date:
+    def get_cycle(self, account: Account, year: int, month: int) -> Cycle:
+        """The cycle whose due date lies in the given month."""
         if account.due_day is None:
             raise ValueError("Account has no due day")
-        correct_month = self._get_correct_month(account.due_day, 25, selected_month)
-        return correct_month.replace(day=account.due_day) - datetime.timedelta(days=25)
 
-    def get_due_date(self, account: Account, selected_month: datetime.date) -> datetime.date:
-        if account.due_day is None:
-            raise ValueError("Account has no due day")
-        offset = account.autopay_offset if account.autopay_offset else 0
-        correct_month = self._get_correct_month(account.due_day, offset, selected_month)
-        return correct_month.replace(day=account.due_day) - datetime.timedelta(days=offset)
+        # a due day of 29-31 falls on the last day of shorter months
+        last_day = calendar.monthrange(year, month)[1]
+        due_date = datetime.date(year, month, min(account.due_day, last_day))
+        rule = rule_for(account.issuer)
 
-    def _next_month(self, date: datetime.date) -> datetime.date:
-        return (date.replace(day=1) + datetime.timedelta(days=40)).replace(day=1)
+        return Cycle(
+            due_date=due_date,
+            payment_date=rule.payment_date(due_date, account.autopay_offset or 0),
+            statement_date=rule.statement_date(due_date),
+        )
 
-    def _previous_month(self, date: datetime.date) -> datetime.date:
-        return (date.replace(day=1) - datetime.timedelta(days=10)).replace(day=1)
+    def _cycles_around(self, account: Account, date: datetime.date) -> List[Cycle]:
+        """The cycles due from two months before to two months after the date, oldest first."""
+        cycles = []
+        for offset in range(-2, 3):
+            month_index = date.year * 12 + (date.month - 1) + offset
+            cycles.append(self.get_cycle(account, month_index // 12, month_index % 12 + 1))
+        return cycles
 
-    def _get_correct_month(self, due_day: int, offset: int, month: datetime.date) -> datetime.date:
-        if due_day > offset:
-            return month
-        else:
-            return self._next_month(month)
+    def get_next_cycle(self, account: Account, today: datetime.date | None = None) -> Cycle:
+        """The cycle that is paid next (a payment today still counts)."""
+        today = today or datetime.date.today()
+        return next(c for c in self._cycles_around(account, today) if c.payment_date >= today)
+
+    def get_last_cycle(self, account: Account, today: datetime.date | None = None) -> Cycle:
+        """The most recent cycle that was paid before today."""
+        today = today or datetime.date.today()
+        return [c for c in self._cycles_around(account, today) if c.payment_date < today][-1]
 
     def get_next_due_date(self, account: Account) -> datetime.date:
-        today = datetime.date.today()
-        due_date_current_month = self.get_due_date(account, today)
-
-        if today > due_date_current_month:
-            due_date_next_month = self.get_due_date(account, self._next_month(today))
-            return due_date_next_month
-
-        return due_date_current_month
+        return self.get_next_cycle(account).payment_date
 
     def get_last_due_date(self, account: Account) -> datetime.date:
-        today = datetime.date.today()
-        due_date_current_month = self.get_due_date(account, today)
-
-        if today <= due_date_current_month:
-            due_date_next_month = self.get_due_date(account, self._previous_month(today))
-            return due_date_next_month
-
-        return due_date_current_month
+        return self.get_last_cycle(account).payment_date
 
     def get_statement_date_for_due_date(self, account: Account, due_date: datetime.date) -> datetime.date:
-        offset = account.autopay_offset if account.autopay_offset else 0
-        return due_date - datetime.timedelta(days=25-offset)
+        """The closing date of the statement that is paid on the given payment date."""
+        for cycle in self._cycles_around(account, due_date):
+            if cycle.payment_date == due_date:
+                return cycle.statement_date
+        raise ValueError("{} is not a payment date of account {}".format(due_date, account.id))
