@@ -36,7 +36,6 @@ const optionalInteger = (min: number, max: number, message: string) =>
 const schema = z.object({
   name: z.string().trim().min(1, "Required"),
   institution: z.string().trim().min(1, "Required"),
-  icon: z.string().trim(),
   color: z
     .string()
     .trim()
@@ -89,7 +88,6 @@ export function CreditCardDialog({
     defaultValues: {
       name: account?.name ?? "",
       institution: account?.institution ?? "",
-      icon: account?.icon ?? "",
       color: account?.color ?? "",
       due_day: toText(account?.due_day),
       autopay_offset: toText(account?.autopay_offset),
@@ -109,7 +107,6 @@ export function CreditCardDialog({
       {
         name: values.name,
         institution: values.institution,
-        icon: values.icon || null,
         color: values.color || null,
         due_day: toNumber(values.due_day),
         autopay_offset: toNumber(values.autopay_offset),
@@ -162,13 +159,6 @@ export function CreditCardDialog({
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Icon" htmlFor={id + "icon"}>
-            <Input
-              id={id + "icon"}
-              placeholder="Image URL (optional)"
-              {...register("icon")}
-            />
-          </Field>
           <Field
             label="Color"
             htmlFor={id + "color"}
@@ -195,6 +185,21 @@ export function CreditCardDialog({
                 {...register("color")}
               />
             </div>
+          </Field>
+          <Field label="Status">
+            <Controller
+              control={control}
+              name="active"
+              render={({ field }) => (
+                <label className="flex h-10 items-center gap-2 text-[13px] font-medium">
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  {field.value ? "Active" : "Inactive"}
+                </label>
+              )}
+            />
           </Field>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -295,26 +300,9 @@ export function CreditCardDialog({
             />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Actual ID" htmlFor={id + "actual"}>
-            <Input id={id + "actual"} {...register("actual_id")} />
-          </Field>
-          <Field label="Status">
-            <Controller
-              control={control}
-              name="active"
-              render={({ field }) => (
-                <label className="flex h-10 items-center gap-2 text-[13px] font-medium">
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                  {field.value ? "Active" : "Inactive"}
-                </label>
-              )}
-            />
-          </Field>
-        </div>
+        <Field label="Actual ID" htmlFor={id + "actual"}>
+          <Input id={id + "actual"} {...register("actual_id")} />
+        </Field>
         <button type="submit" className="hidden" />
       </form>
     </Dialog>

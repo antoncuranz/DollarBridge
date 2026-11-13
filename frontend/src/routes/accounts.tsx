@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import { Landmark, MoreHorizontal, Pencil, PlugZap, Plus } from "lucide-react"
+import { Cable, Landmark, MoreHorizontal, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
 import type { ReactNode } from "react"
 
@@ -117,7 +117,7 @@ function Connections({
             key={connection.id}
             className="flex h-14 shrink-0 items-center gap-2.5 rounded-row pr-1 pl-2.5"
           >
-            <PlugZap className="size-4 shrink-0 text-muted-foreground" />
+            <Cable className="size-4 shrink-0 text-muted-foreground" />
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="truncate text-sm leading-5 font-medium">
                 {connection.user.id !== user.id &&

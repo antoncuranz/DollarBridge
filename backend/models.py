@@ -55,7 +55,6 @@ class BankAccount(SQLModel, table=True):
     accounts: List["Account"] = Relationship()
     name: str
     institution: str
-    icon: str | None = None
     balance: int = 0
     import_id: str | None = None  # TODO: remove once migrated to plaid
     plaid_account_id: int | None = Field(default=None, foreign_key="plaidaccount.id", ondelete="SET NULL")
@@ -76,7 +75,6 @@ class Account(SQLModel, table=True):
     institution: str
     due_day: int | None = None
     autopay_offset: int | None = None
-    icon: str | None = None
     color: str | None = None
     target_spend: int | None = None
     active: bool = True

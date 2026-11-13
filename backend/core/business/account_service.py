@@ -14,7 +14,6 @@ class CreateAccount(SQLModel):
     institution: str
     due_day: int | None
     autopay_offset: int | None
-    icon: str | None
     color: str | None
     target_spend: int | None
     bank_account_id: int | None
@@ -26,7 +25,6 @@ class CreateAccount(SQLModel):
 class CreateBankAccount(SQLModel):
     name: str
     institution: str
-    icon: str | None
     plaid_account_id: int | None
 
 
@@ -41,7 +39,6 @@ class BankAccountTO(SQLModel):
     user: BankAccountUserTO
     name: str
     institution: str
-    icon: str | None
     balance: int
     plaid_account_id: int | None
     last_successful_update: datetime.datetime | None
@@ -64,7 +61,7 @@ class AccountService:
                           actual_id=create_account.actual_id, plaid_account_id=create_account.plaid_account_id,
                           name=create_account.name, institution=create_account.institution,
                           due_day=create_account.due_day, autopay_offset=create_account.autopay_offset,
-                          icon=create_account.icon, color=create_account.color, target_spend=create_account.target_spend,
+                          color=create_account.color, target_spend=create_account.target_spend,
                           active=create_account.active)
         session.commit()
         return account
@@ -78,7 +75,6 @@ class AccountService:
         account.institution = create_account.institution
         account.due_day = create_account.due_day
         account.autopay_offset = create_account.autopay_offset
-        account.icon = create_account.icon
         account.color = create_account.color
         account.target_spend = create_account.target_spend
         account.bank_account_id = create_account.bank_account_id
@@ -104,7 +100,6 @@ class AccountService:
     def create_bank_account(self, session: Session, user: User, create_bank_account: CreateBankAccount) -> BankAccount:
         bank_account = self.store.create_bank_account(session, user, name=create_bank_account.name,
                                                       institution=create_bank_account.institution,
-                                                      icon=create_bank_account.icon,
                                                       plaid_account_id=create_bank_account.plaid_account_id)
         session.commit()
         return bank_account
@@ -116,6 +111,5 @@ class AccountService:
         
         bank_account.name = create_bank_account.name
         bank_account.institution = create_bank_account.institution
-        bank_account.icon = create_bank_account.icon
         bank_account.plaid_account_id = create_bank_account.plaid_account_id
         session.commit()

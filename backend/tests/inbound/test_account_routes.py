@@ -31,7 +31,6 @@ def test_modify_account_can_deactivate_and_reactivate(session: Session, client: 
         "institution": ACCOUNT_1["institution"],
         "due_day": None,
         "autopay_offset": None,
-        "icon": None,
         "color": None,
         "target_spend": None,
         "bank_account_id": BANK_ACCOUNT_1["id"],

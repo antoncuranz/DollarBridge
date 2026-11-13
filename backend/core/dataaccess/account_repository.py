@@ -23,12 +23,12 @@ class AccountRepository:
 
     def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: str | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
-                       autopay_offset: int | None, icon: str | None, color: str | None,
+                       autopay_offset: int | None, color: str | None,
                        target_spend: int | None, active: bool = True) -> Account:
         user_id = require_persisted_id(user)
         account = Account(user_id=user_id, bank_account_id=bank_account_id, actual_id=actual_id,
                           plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
-                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
+                          autopay_offset=autopay_offset, color=color, target_spend=target_spend,
                           active=active)
         session.add(account)
         return account
@@ -47,8 +47,8 @@ class AccountRepository:
         stmt = select(BankAccount).where(query & (BankAccount.id == bank_account_id))
         return session.exec(stmt).first()
 
-    def create_bank_account(self, session: Session, user: User, name: str, institution: str, icon: str | None, plaid_account_id: int | None) -> BankAccount:
+    def create_bank_account(self, session: Session, user: User, name: str, institution: str, plaid_account_id: int | None) -> BankAccount:
         user_id = require_persisted_id(user)
-        bank_account = BankAccount(user_id=user_id, name=name, institution=institution, icon=icon, plaid_account_id=plaid_account_id)
+        bank_account = BankAccount(user_id=user_id, name=name, institution=institution, plaid_account_id=plaid_account_id)
         session.add(bank_account)
         return bank_account

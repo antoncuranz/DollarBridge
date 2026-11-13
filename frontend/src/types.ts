@@ -14,7 +14,6 @@ export type Account = {
   institution: string
   due_day: number | null
   autopay_offset: number | null
-  icon: string | null
   color: string | null
   target_spend: number | null
   active: boolean
@@ -25,7 +24,6 @@ export type BankAccount = {
   user: User
   name: string
   institution: string
-  icon: string | null
   balance: number
   plaid_account_id: number | null
   last_successful_update: string | null

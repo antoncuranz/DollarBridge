@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 const schema = z.object({
   name: z.string().trim().min(1, "Required"),
   institution: z.string().trim().min(1, "Required"),
-  icon: z.string().trim(),
   plaid_account_id: z.number().nullable(),
 })
 
@@ -45,16 +44,12 @@ export function BankAccountDialog({
     defaultValues: {
       name: bankAccount?.name ?? "",
       institution: bankAccount?.institution ?? "",
-      icon: bankAccount?.icon ?? "",
       plaid_account_id: bankAccount?.plaid_account_id ?? null,
     },
   })
 
   const submit = handleSubmit(values =>
-    mutation.mutate(
-      { ...values, icon: values.icon || null },
-      { onSuccess: onClose },
-    ),
+    mutation.mutate(values, { onSuccess: onClose }),
   )
 
   return (
@@ -87,13 +82,6 @@ export function BankAccountDialog({
           error={errors.institution?.message}
         >
           <Input id={id + "institution"} {...register("institution")} />
-        </Field>
-        <Field label="Icon" htmlFor={id + "icon"}>
-          <Input
-            id={id + "icon"}
-            placeholder="Image URL (optional)"
-            {...register("icon")}
-          />
         </Field>
         <Field label="Plaid connection" htmlFor={id + "plaid"}>
           <Controller

@@ -223,7 +223,6 @@ export type AccountInput = {
   institution: string
   due_day: number | null
   autopay_offset: number | null
-  icon: string | null
   color: string | null
   target_spend: number | null
   bank_account_id: number | null
@@ -253,7 +252,6 @@ export function useSaveAccount(accountId: number | undefined) {
 export type BankAccountInput = {
   name: string
   institution: string
-  icon: string | null
   plaid_account_id: number | null
 }
 

@@ -42,11 +42,11 @@ class Store:
 
     def create_account(self, session: Session, user: User, bank_account_id: int | None, actual_id: str | None,
                        plaid_account_id: int | None, name: str, institution: str, due_day: int | None,
-                       autopay_offset: int | None, icon: str | None, color: str | None, target_spend: int | None,
+                       autopay_offset: int | None, color: str | None, target_spend: int | None,
                        active: bool = True) -> Account:
         return self.account_repository.create_account(session, user, bank_account_id=bank_account_id, actual_id=actual_id,
                           plaid_account_id=plaid_account_id, name=name, institution=institution, due_day=due_day,
-                          autopay_offset=autopay_offset, icon=icon, color=color, target_spend=target_spend,
+                          autopay_offset=autopay_offset, color=color, target_spend=target_spend,
                           active=active)
 
     def get_all_bank_accounts(self, session: Session) -> List[BankAccount]:
@@ -58,8 +58,8 @@ class Store:
     def get_bank_account(self, session: Session, user: User, bank_account_id: int) -> Optional[BankAccount]:
         return self.account_repository.get_bank_account(session, user, bank_account_id)
 
-    def create_bank_account(self, session: Session, user: User, name: str, institution: str, icon: str | None, plaid_account_id: int | None) -> BankAccount:
-        return self.account_repository.create_bank_account(session, user, name=name, institution=institution, icon=icon, plaid_account_id=plaid_account_id)
+    def create_bank_account(self, session: Session, user: User, name: str, institution: str, plaid_account_id: int | None) -> BankAccount:
+        return self.account_repository.create_bank_account(session, user, name=name, institution=institution, plaid_account_id=plaid_account_id)
 
     #### TRANSACTIONS ####
     

@@ -21,7 +21,6 @@ class AccountTO(SQLModel):
     institution: str
     due_day: int | None
     autopay_offset: int | None
-    icon: str | None
     color: str | None
     target_spend: int | None
     active: bool
