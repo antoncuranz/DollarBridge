@@ -10,7 +10,7 @@ dependencies = [
     "gql==4.4.0",
     "ibind==0.2.3",
     "openai==3.42.1",
-    "paho-mqtt==2.1.0",
+    "paho-mqtt==2.2.0",
     "pebble==5.2.3",
     "plaid-python==46.0.0",
     "prometheus-client==0.26.0",
