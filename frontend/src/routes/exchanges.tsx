@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Check, Link as LinkIcon, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 
-import type { Exchange, Payment } from "@/types"
 import {
   useApplyExchange,
   useDeleteExchange,
@@ -50,6 +49,7 @@ import {
 } from "@/lib/money"
 import { useStore } from "@/store"
 import { Status } from "@/types"
+import type { Exchange, Payment } from "@/types"
 
 export const Route = createFileRoute("/exchanges")({
   component: ExchangesPage,

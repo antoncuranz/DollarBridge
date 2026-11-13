@@ -3,8 +3,6 @@ import { Check, FileText, Upload, X } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import type { StatementTab } from "@/components/statements/store"
-import type { Account, StatementMatchResult } from "@/types"
 import { useSaveAmounts } from "@/api/mutations"
 import { EurField } from "@/components/list/EurField"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
@@ -36,6 +34,8 @@ import {
 import { deviationLabel, hasLargeDeviation } from "@/lib/derive"
 import { formatAmount, formatUsd } from "@/lib/money"
 import { cn } from "@/lib/utils"
+import type { Account, StatementMatchResult } from "@/types"
+import type { StatementTab } from "@/components/statements/store"
 
 export const Route = createFileRoute("/statements")({
   component: StatementsPage,

@@ -14,14 +14,14 @@ import {
 } from "date-fns"
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
-import type { CSSProperties } from "react"
 
-import type { AccountDatesMap } from "@/types"
 import { accountsQuery, datesQuery } from "@/api/queries"
 import { Button } from "@/components/ui/button"
 import { formatMonth } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 import { usePreferences } from "@/store"
+import type { AccountDatesMap } from "@/types"
+import type { CSSProperties } from "react"
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 

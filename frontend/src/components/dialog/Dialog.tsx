@@ -1,7 +1,6 @@
 import { format, parseISO } from "date-fns"
 import { ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
-import type { ReactNode } from "react"
 
 import {
   DialogContent,
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/popover"
 import { formatAmount, formatGrouped, parseAmount } from "@/lib/money"
 import { cn } from "@/lib/utils"
+import type { ReactNode } from "react"
 
 /** Dialog frame: title, scrolling body and a footer with the main action. */
 export function Dialog({

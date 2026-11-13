@@ -1,4 +1,3 @@
-import type { PlaidConnection } from "@/types"
 import {
   Select,
   SelectContent,
@@ -9,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { PlaidConnection } from "@/types"
 
 const NONE = -1
 

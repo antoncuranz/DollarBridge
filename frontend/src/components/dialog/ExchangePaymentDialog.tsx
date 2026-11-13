@@ -1,14 +1,6 @@
 import { ArrowLeftRight, Check } from "lucide-react"
 import { useState } from "react"
 
-import {
-  AmountField,
-  ContextBox,
-  ContextLine,
-  Dialog,
-  useInvalidFields,
-} from "./Dialog"
-import type { Account, Exchange, Payment } from "@/types"
 import { useApplyExchange } from "@/api/mutations"
 import { Swatch } from "@/components/list/Row"
 import { Button } from "@/components/ui/button"
@@ -19,6 +11,14 @@ import {
   paymentRemainder,
 } from "@/lib/derive"
 import { formatAmount, formatRate, formatUsd } from "@/lib/money"
+import {
+  AmountField,
+  ContextBox,
+  ContextLine,
+  Dialog,
+  useInvalidFields,
+} from "./Dialog"
+import type { Account, Exchange, Payment } from "@/types"
 
 /** Allocates part of an exchange to a payment. */
 export function ExchangePaymentDialog({

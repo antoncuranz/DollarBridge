@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
-import { cn } from "@/lib/utils"
 
 /** Divider line plus a label row that starts a group of rows. */
 export function GroupSeparator({

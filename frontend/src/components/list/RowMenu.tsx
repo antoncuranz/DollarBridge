@@ -1,7 +1,7 @@
 import { ContextMenu } from "@base-ui/react/context-menu"
+import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
-import { cn } from "@/lib/utils"
 
 export type RowMenuItem = {
   label: string

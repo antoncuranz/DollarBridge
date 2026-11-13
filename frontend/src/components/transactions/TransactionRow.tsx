@@ -1,7 +1,5 @@
 import { Link as LinkIcon } from "lucide-react"
 
-import type { Account, Transaction } from "@/types"
-import type { RowMenuItem } from "@/components/list/RowMenu"
 import { useCashback } from "@/api/mutations"
 import { EurField } from "@/components/list/EurField"
 import { Amount, Row, Swatch } from "@/components/list/Row"
@@ -17,6 +15,8 @@ import {
 import { formatUsd } from "@/lib/money"
 import { useStore } from "@/store"
 import { Status } from "@/types"
+import type { RowMenuItem } from "@/components/list/RowMenu"
+import type { Account, Transaction } from "@/types"
 
 export function TransactionRow({
   transaction,

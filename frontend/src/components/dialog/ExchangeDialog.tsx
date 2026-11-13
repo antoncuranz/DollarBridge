@@ -2,6 +2,10 @@ import { format } from "date-fns"
 import { Check } from "lucide-react"
 import { useState } from "react"
 
+import { useCreateExchange } from "@/api/mutations"
+import { Button } from "@/components/ui/button"
+import { exchangeAmountEur } from "@/lib/derive"
+import { formatAmount, formatGrouped } from "@/lib/money"
 import {
   AmountField,
   ComputedField,
@@ -10,10 +14,6 @@ import {
   FieldRow,
   useInvalidFields,
 } from "./Dialog"
-import { useCreateExchange } from "@/api/mutations"
-import { Button } from "@/components/ui/button"
-import { exchangeAmountEur } from "@/lib/derive"
-import { formatAmount, formatGrouped } from "@/lib/money"
 
 /** Adds a USD exchange. EUR amount and fees are derived and shown read-only. */
 export function ExchangeDialog({ onClose }: { onClose: () => void }) {

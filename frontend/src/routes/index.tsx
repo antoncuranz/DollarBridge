@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Check, CloudUpload, Download, Link as LinkIcon } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
-import type { Transaction } from "@/types"
 import { useActualExport, useImport, useSaveAmounts } from "@/api/mutations"
 import {
   bankAccountsQuery,
@@ -47,6 +46,7 @@ import { creditRemainder, groupBy } from "@/lib/derive"
 import { formatUsd } from "@/lib/money"
 import { useStore } from "@/store"
 import { Status } from "@/types"
+import type { Transaction } from "@/types"
 
 type Search = { account?: number }
 

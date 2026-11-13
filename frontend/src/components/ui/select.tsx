@@ -2,8 +2,8 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 import * as React from "react"
 
-import { fieldClassName } from "./input"
 import { cn } from "@/lib/utils"
+import { fieldClassName } from "./input"
 
 function Select({
   ...props
