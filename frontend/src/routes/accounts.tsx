@@ -12,9 +12,11 @@ import { PlaidLink } from "@/components/accounts/PlaidLink"
 import { BankAccountDialog } from "@/components/dialog/BankAccountDialog"
 import { CreditCardDialog } from "@/components/dialog/CreditCardDialog"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
+import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { RowAction, Swatch } from "@/components/list/Row"
 import { ListHeader, Rows, Workspace } from "@/components/shell/Workspace"
 import { SidebarHeader } from "@/components/sidebar/AccountFilter"
+import { SidebarItemsSkeleton } from "@/components/sidebar/SidebarSkeleton"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
 import { Button } from "@/components/ui/button"
 import {
@@ -181,9 +183,12 @@ type Editing =
 
 function AccountsPage() {
   const user = useUser()
-  const { accounts, balances } = useAccounts()
-  const { data: bankAccounts = [] } = useQuery(bankAccountsQuery)
-  const { data: connections = [] } = useQuery(connectionsQuery)
+  const { accounts, balances, isPending: accountsPending } = useAccounts()
+  const { data: bankAccounts = [], isPending: bankAccountsPending } =
+    useQuery(bankAccountsQuery)
+  const { data: connections = [], isPending: connectionsPending } =
+    useQuery(connectionsQuery)
+  const loading = accountsPending || bankAccountsPending
 
   const [editing, setEditing] = useState<Editing>(null)
   /** undefined: closed, null: new connection, number: repair that connection */
@@ -238,7 +243,8 @@ function AccountsPage() {
         lastUpdate={lastUpdate}
         onRepair={setPlaid}
       />
-      {connections.length === 0 && (
+      {connectionsPending && <SidebarItemsSkeleton count={4} />}
+      {!connectionsPending && connections.length === 0 && (
         <p className="px-1 pb-2 text-sm text-muted-foreground">
           No bank is connected yet.
         </p>
@@ -299,125 +305,140 @@ function AccountsPage() {
       header={
         <ListHeader
           title="Accounts"
-          subtitle={`${active.length} credit ${active.length === 1 ? "card" : "cards"} · ${bankAccounts.length} bank ${bankAccounts.length === 1 ? "account" : "accounts"}`}
+          subtitle={
+            loading
+              ? undefined
+              : `${active.length} credit ${active.length === 1 ? "card" : "cards"} · ${bankAccounts.length} bank ${bankAccounts.length === 1 ? "account" : "accounts"}`
+          }
         >
           {addButtons}
         </ListHeader>
       }
     >
-      <GroupSeparator
-        first
-        label="Credit cards"
-        info={
-          <span className="redactable">
-            Total{" "}
-            {formatUsd(
-              active.reduce(
-                (total, a) => total + (balances?.[a.id]?.posted ?? 0),
-                0,
-              ),
-            )}
-          </span>
-        }
-      />
-      <Rows>
-        {sorted.map(account => {
-          const balance = balances?.[account.id]
-          const bank =
-            account.bank_account_id != null
-              ? bankById.get(account.bank_account_id)
-              : undefined
-          const spent = balance
-            ? balance.total_spent - balance.total_credits
-            : null
-          return (
-            <AccountRow
-              key={account.id}
-              swatch={
-                <Swatch account={account} className="h-5 w-7 rounded-[4px]" />
-              }
-              name={
-                owner(account) +
-                account.name +
-                (account.active ? "" : " (inactive)")
-              }
-              inactive={!account.active}
-              details={
-                account.active
-                  ? [
-                      account.institution,
-                      account.due_day != null &&
-                        `due ${ordinal(account.due_day)}`,
-                      account.autopay_offset != null &&
-                        `autopay ${account.autopay_offset} ${account.autopay_offset === 1 ? "day" : "days"} before`,
-                      bank && `from ${bank.name}`,
-                      account.target_spend != null &&
-                        `${spent != null ? `$ ${formatGrouped(spent)} of ` : ""}target $ ${account.target_spend.toLocaleString("en-US")}`,
-                    ]
-                  : [
-                      account.institution,
-                      "hidden from transactions and archive",
-                    ]
-              }
-              value={formatUsd(balance?.posted ?? 0)}
-              status={
-                !account.active ? (
-                  "Inactive"
-                ) : (
-                  <Updated
-                    timestamp={balance?.last_successful_update}
-                    prefix={
-                      balance && balance.pending !== 0
-                        ? `+${formatGrouped(balance.pending)} pending`
-                        : undefined
-                    }
-                  />
-                )
-              }
-              onEdit={() => setEditing({ kind: "card", account })}
-            />
-          )
-        })}
-      </Rows>
-
-      <GroupSeparator
-        label="Bank accounts"
-        info={
-          <span className="redactable">
-            Total{" "}
-            {formatEur(bankAccounts.reduce((total, b) => total + b.balance, 0))}
-          </span>
-        }
-      />
-      <Rows>
-        {bankAccounts.map(bankAccount => {
-          const pays = active
-            .filter(a => a.bank_account_id === bankAccount.id)
-            .map(a => a.name)
-          return (
-            <AccountRow
-              key={bankAccount.id}
-              swatch={
-                <Swatch
-                  color="var(--muted)"
-                  className="h-5 w-7 rounded-[4px]"
+      {loading ? (
+        <ListSkeleton tall groups={[5, 2]} />
+      ) : (
+        <>
+          <GroupSeparator
+            first
+            label="Credit cards"
+            info={
+              <span className="redactable">
+                Total{" "}
+                {formatUsd(
+                  active.reduce(
+                    (total, a) => total + (balances?.[a.id]?.posted ?? 0),
+                    0,
+                  ),
+                )}
+              </span>
+            }
+          />
+          <Rows>
+            {sorted.map(account => {
+              const balance = balances?.[account.id]
+              const bank =
+                account.bank_account_id != null
+                  ? bankById.get(account.bank_account_id)
+                  : undefined
+              const spent = balance
+                ? balance.total_spent - balance.total_credits
+                : null
+              return (
+                <AccountRow
+                  key={account.id}
+                  swatch={
+                    <Swatch
+                      account={account}
+                      className="h-5 w-7 rounded-[4px]"
+                    />
+                  }
+                  name={
+                    owner(account) +
+                    account.name +
+                    (account.active ? "" : " (inactive)")
+                  }
+                  inactive={!account.active}
+                  details={
+                    account.active
+                      ? [
+                          account.institution,
+                          account.due_day != null &&
+                            `due ${ordinal(account.due_day)}`,
+                          account.autopay_offset != null &&
+                            `autopay ${account.autopay_offset} ${account.autopay_offset === 1 ? "day" : "days"} before`,
+                          bank && `from ${bank.name}`,
+                          account.target_spend != null &&
+                            `${spent != null ? `$ ${formatGrouped(spent)} of ` : ""}target $ ${account.target_spend.toLocaleString("en-US")}`,
+                        ]
+                      : [
+                          account.institution,
+                          "hidden from transactions and archive",
+                        ]
+                  }
+                  value={formatUsd(balance?.posted ?? 0)}
+                  status={
+                    !account.active ? (
+                      "Inactive"
+                    ) : (
+                      <Updated
+                        timestamp={balance?.last_successful_update}
+                        prefix={
+                          balance && balance.pending !== 0
+                            ? `+${formatGrouped(balance.pending)} pending`
+                            : undefined
+                        }
+                      />
+                    )
+                  }
+                  onEdit={() => setEditing({ kind: "card", account })}
                 />
-              }
-              name={owner(bankAccount) + bankAccount.name}
-              details={[
-                bankAccount.institution,
-                plaidLabel(bankAccount.plaid_account_id),
-                pays.length > 0 && `pays ${pays.join(", ")}`,
-              ]}
-              value={formatEur(bankAccount.balance)}
-              status={
-                <Updated timestamp={bankAccount.last_successful_update} />
-              }
-              onEdit={() => setEditing({ kind: "bank", bankAccount })}
-            />
-          )
-        })}
-      </Rows>
+              )
+            })}
+          </Rows>
+
+          <GroupSeparator
+            label="Bank accounts"
+            info={
+              <span className="redactable">
+                Total{" "}
+                {formatEur(
+                  bankAccounts.reduce((total, b) => total + b.balance, 0),
+                )}
+              </span>
+            }
+          />
+          <Rows>
+            {bankAccounts.map(bankAccount => {
+              const pays = active
+                .filter(a => a.bank_account_id === bankAccount.id)
+                .map(a => a.name)
+              return (
+                <AccountRow
+                  key={bankAccount.id}
+                  swatch={
+                    <Swatch
+                      color="var(--muted)"
+                      className="h-5 w-7 rounded-[4px]"
+                    />
+                  }
+                  name={owner(bankAccount) + bankAccount.name}
+                  details={[
+                    bankAccount.institution,
+                    plaidLabel(bankAccount.plaid_account_id),
+                    pays.length > 0 && `pays ${pays.join(", ")}`,
+                  ]}
+                  value={formatEur(bankAccount.balance)}
+                  status={
+                    <Updated timestamp={bankAccount.last_successful_update} />
+                  }
+                  onEdit={() => setEditing({ kind: "bank", bankAccount })}
+                />
+              )
+            })}
+          </Rows>
+        </>
+      )}
 
       <div className="md:hidden">
         <GroupSeparator label="Connections" info={connections.length} />

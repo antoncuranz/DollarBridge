@@ -19,6 +19,7 @@ import { useUser } from "@/api/useUser"
 import { ExchangeDialog } from "@/components/dialog/ExchangeDialog"
 import { ExchangePaymentDialog } from "@/components/dialog/ExchangePaymentDialog"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
+import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { Amount, EurValue, Row, RowAction, Swatch } from "@/components/list/Row"
 import { RowMenu } from "@/components/list/RowMenu"
 import {
@@ -28,6 +29,7 @@ import {
   Workspace,
 } from "@/components/shell/Workspace"
 import { SidebarHeader } from "@/components/sidebar/AccountFilter"
+import { StatTileSkeleton } from "@/components/sidebar/SidebarSkeleton"
 import { StatTile, StatTileStrip } from "@/components/sidebar/StatTile"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
 import { Button } from "@/components/ui/button"
@@ -69,7 +71,16 @@ function UsdColumns({
 }
 
 function Summary() {
-  const { data: balances } = useQuery(balancesQuery)
+  const { data: balances, isPending } = useQuery(balancesQuery)
+  if (isPending) {
+    return (
+      <>
+        <StatTileSkeleton />
+        <StatTileSkeleton />
+        <StatTileSkeleton />
+      </>
+    )
+  }
   if (!balances) return null
   const virtual = Number(balances.virtual_account)
 
@@ -99,12 +110,13 @@ function Summary() {
 
 function ExchangesPage() {
   const user = useUser()
-  const { byId } = useAccounts()
-  const { data: exchanges = [] } = useQuery({
+  const { byId, isPending: accountsPending } = useAccounts()
+  const { data: exchanges = [], isLoading: exchangesLoading } = useQuery({
     ...usableExchangesQuery,
     enabled: user.super_user,
   })
   const { data: allPayments = [], isPending } = useQuery(openPaymentsQuery)
+  const loading = isPending || accountsPending || exchangesLoading
 
   const exchangeSelection = useStore(state => state.exchangeSelection)
   const setExchangeSelection = useStore(state => state.setExchangeSelection)
@@ -390,30 +402,37 @@ function ExchangesPage() {
         )
       }
     >
-      {user.super_user && (
+      {loading ? (
+        <ListSkeleton groups={[2, 5]} />
+      ) : (
         <>
-          <GroupSeparator
-            first
-            label="Exchanges"
-            info={formatUsd(
-              exchanges.reduce((total, e) => total + exchangeRemainder(e), 0),
-            )}
-          />
-          <Rows>{exchanges.map(exchangeRow)}</Rows>
-          {exchanges.length === 0 && (
-            <EmptyState>No exchange with an open amount.</EmptyState>
+          {user.super_user && (
+            <>
+              <GroupSeparator
+                first
+                label="Exchanges"
+                info={formatUsd(
+                  exchanges.reduce(
+                    (total, e) => total + exchangeRemainder(e),
+                    0,
+                  ),
+                )}
+              />
+              <Rows>{exchanges.map(exchangeRow)}</Rows>
+              {exchanges.length === 0 && (
+                <EmptyState>No exchange with an open amount.</EmptyState>
+              )}
+            </>
           )}
-        </>
-      )}
 
-      <GroupSeparator
-        first={!user.super_user}
-        label="Upcoming payments"
-        info={`${formatUsd(payments.reduce((total, p) => total + p.amount_usd, 0))} · ${covered} covered`}
-      />
-      <Rows>{payments.map(paymentRow)}</Rows>
-      {!isPending && payments.length === 0 && (
-        <EmptyState>No open payments.</EmptyState>
+          <GroupSeparator
+            first={!user.super_user}
+            label="Upcoming payments"
+            info={`${formatUsd(payments.reduce((total, p) => total + p.amount_usd, 0))} · ${covered} covered`}
+          />
+          <Rows>{payments.map(paymentRow)}</Rows>
+          {payments.length === 0 && <EmptyState>No open payments.</EmptyState>}
+        </>
       )}
 
       {adding && <ExchangeDialog onClose={() => setAdding(false)} />}

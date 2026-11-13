@@ -12,6 +12,7 @@ import {
 } from "@/api/queries"
 import { useUser } from "@/api/useUser"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
+import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { Amount, EurValue, Row, Swatch } from "@/components/list/Row"
 import {
   EmptyState,
@@ -21,6 +22,10 @@ import {
   Workspace,
 } from "@/components/shell/Workspace"
 import { SidebarHeader, SidebarItem } from "@/components/sidebar/AccountFilter"
+import {
+  SidebarItemsSkeleton,
+  StatTileSkeleton,
+} from "@/components/sidebar/SidebarSkeleton"
 import { StatTile } from "@/components/sidebar/StatTile"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
 import { Button } from "@/components/ui/button"
@@ -68,7 +73,7 @@ function ArchivePage() {
   const user = useUser()
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
-  const { byId, own } = useAccounts()
+  const { byId, own, isPending: accountsPending } = useAccounts()
 
   const month = parseMonthKey(search.month)
   const range = monthRange(month)
@@ -78,11 +83,12 @@ function ArchivePage() {
     paidTransactionsQuery(range),
   )
   const { data: payments = [] } = useQuery(processedPaymentsQuery(range))
-  const { data: fees } = useQuery({
+  const { data: fees, isLoading: feesLoading } = useQuery({
     ...feesQuery(range),
     enabled: user.super_user,
   })
   const unprocess = useUnprocessPayment()
+  const loading = isPending || accountsPending
 
   const setSearch = (next: Search) =>
     void navigate({ search: { ...search, ...next }, replace: true })
@@ -107,15 +113,18 @@ function ArchivePage() {
     transactions.reduce((total, tx) => total + (tx.amount_eur ?? 0), 0)
   const monthName = formatMonth(month).split(" ")[0]
 
-  const summary = (
-    <StatTile
-      label={`FX fees & risk · ${monthName}`}
-      value={formatEur(feeTotal)}
-    >
-      on {formatEur(paidTotal)} paid
-      {paidTotal > 0 && ` · ${((feeTotal / paidTotal) * 100).toFixed(2)} %`}
-    </StatTile>
-  )
+  const summary =
+    loading || feesLoading ? (
+      <StatTileSkeleton />
+    ) : (
+      <StatTile
+        label={`FX fees & risk · ${monthName}`}
+        value={formatEur(feeTotal)}
+      >
+        on {formatEur(paidTotal)} paid
+        {paidTotal > 0 && ` · ${((feeTotal / paidTotal) * 100).toFixed(2)} %`}
+      </StatTile>
+    )
 
   const monthNavigation = (
     <div className="flex items-center gap-2">
@@ -156,6 +165,7 @@ function ArchivePage() {
           {summary}
           <div className="h-2 shrink-0" />
           <SidebarHeader title="Accounts" />
+          {loading && <SidebarItemsSkeleton count={3} />}
           {listedAccounts.map(account => (
             <SidebarItem
               key={account.id}
@@ -207,7 +217,11 @@ function ArchivePage() {
       header={
         <ListHeader
           title="Paid transactions"
-          subtitle={`${formatMonth(month)} · ${visible.length} total`}
+          subtitle={
+            loading
+              ? formatMonth(month)
+              : `${formatMonth(month)} · ${visible.length} total`
+          }
         >
           {monthNavigation}
         </ListHeader>
@@ -272,7 +286,8 @@ function ArchivePage() {
           </div>
         )
       })}
-      {!isPending && visible.length === 0 && (
+      {loading && <ListSkeleton groups={[3, 5]} />}
+      {!loading && visible.length === 0 && (
         <EmptyState>Nothing was paid in {formatMonth(month)}.</EmptyState>
       )}
     </Workspace>

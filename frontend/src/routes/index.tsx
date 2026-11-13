@@ -13,6 +13,7 @@ import {
 import { useUser } from "@/api/useUser"
 import { ApplyCreditDialog } from "@/components/dialog/ApplyCreditDialog"
 import { GroupSeparator } from "@/components/list/GroupSeparator"
+import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { SaveBar } from "@/components/shell/SaveBar"
 import {
   EmptyState,
@@ -30,6 +31,10 @@ import {
   totalPosted,
 } from "@/components/sidebar/AccountFilter"
 import { DueCalendar, DueCalendarCard } from "@/components/sidebar/DueCalendar"
+import {
+  AccountCardsSkeleton,
+  SidebarItemsSkeleton,
+} from "@/components/sidebar/SidebarSkeleton"
 import { CreditRow } from "@/components/transactions/CreditRow"
 import { TransactionRow } from "@/components/transactions/TransactionRow"
 import { useAccounts } from "@/components/transactions/useOwnAccounts"
@@ -55,11 +60,20 @@ function TransactionsPage() {
   const user = useUser()
   const navigate = Route.useNavigate()
   const { account: accountParam } = Route.useSearch()
-  const { byId, own, others, balances } = useAccounts()
+  const {
+    byId,
+    own,
+    others,
+    balances,
+    isPending: accountsPending,
+  } = useAccounts()
 
   const { data: transactions = [], isPending } = useQuery(openTransactionsQuery)
-  const { data: credits = [] } = useQuery(usableCreditsQuery)
+  const { data: credits = [], isPending: creditsPending } =
+    useQuery(usableCreditsQuery)
   const { data: bankAccounts = [] } = useQuery(bankAccountsQuery)
+  // credits and transactions form one list: show it only when both are there
+  const loading = isPending || creditsPending || accountsPending
 
   const drafts = useStore(state => state.drafts)
   const clearDrafts = useStore(state => state.clearDrafts)
@@ -198,9 +212,11 @@ function TransactionsPage() {
     <ListHeader
       title={account?.name ?? "All accounts"}
       subtitle={
-        missingCount === 1
-          ? "1 missing EUR amount"
-          : `${missingCount} missing EUR amounts`
+        loading
+          ? undefined
+          : missingCount === 1
+            ? "1 missing EUR amount"
+            : `${missingCount} missing EUR amounts`
       }
     >
       {missingSwitch}
@@ -214,14 +230,20 @@ function TransactionsPage() {
       <SidebarDivider />
       <SidebarHeader
         title="Accounts"
-        info={formatUsd(totalPosted(own, balances))}
+        info={
+          accountsPending ? undefined : formatUsd(totalPosted(own, balances))
+        }
       />
-      <AccountFilter
-        accounts={own}
-        balances={balances}
-        selectedId={accountId}
-        onSelect={selectedCredit ? undefined : selectAccount}
-      />
+      {accountsPending ? (
+        <SidebarItemsSkeleton count={5} />
+      ) : (
+        <AccountFilter
+          accounts={own}
+          balances={balances}
+          selectedId={accountId}
+          onSelect={selectedCredit ? undefined : selectAccount}
+        />
+      )}
       {bankAccounts.some(b => b.user.id === user.id) && (
         <>
           <SidebarHeader title="Bank accounts" />
@@ -253,16 +275,20 @@ function TransactionsPage() {
 
   const mobileTop = (
     <>
-      <AccountCards
-        accounts={own}
-        balances={balances}
-        selectedId={accountId}
-        onSelect={selectedCredit ? () => {} : selectAccount}
-        allLines={[
-          `${open.filter(isMissing).length} missing EUR`,
-          own.length === 1 ? "1 card" : `${own.length} cards`,
-        ]}
-      />
+      {accountsPending ? (
+        <AccountCardsSkeleton />
+      ) : (
+        <AccountCards
+          accounts={own}
+          balances={balances}
+          selectedId={accountId}
+          onSelect={selectedCredit ? () => {} : selectAccount}
+          allLines={[
+            `${open.filter(isMissing).length} missing EUR`,
+            own.length === 1 ? "1 card" : `${own.length} cards`,
+          ]}
+        />
+      )}
       <DueCalendarCard />
       {!selectedCredit && <MobileActions>{missingSwitch}</MobileActions>}
     </>
@@ -329,7 +355,9 @@ function TransactionsPage() {
         )
       }
     >
-      {visibleCredits.length > 0 && (
+      {loading && <ListSkeleton />}
+
+      {!loading && visibleCredits.length > 0 && (
         <>
           <GroupSeparator
             first
@@ -356,35 +384,36 @@ function TransactionsPage() {
         </>
       )}
 
-      {days.map((day, index) => {
-        return (
-          <div key={day.key} className="flex flex-col">
-            <GroupSeparator
-              first={index === 0 && visibleCredits.length === 0}
-              label={formatDay(day.key)}
-            />
-            <Rows>
-              {day.items.map(tx => (
-                <TransactionRow
-                  key={tx.id}
-                  transaction={tx}
-                  account={byId.get(tx.account_id)}
-                  superUser={user.super_user}
-                  onApplyCredit={
-                    selectedCredit ? () => setApplyTo(tx) : undefined
-                  }
-                  creditApplied={
-                    selectedCredit != null &&
-                    tx.credits.some(ct => ct.credit_id === selectedCredit.id)
-                  }
-                />
-              ))}
-            </Rows>
-          </div>
-        )
-      })}
+      {!loading &&
+        days.map((day, index) => {
+          return (
+            <div key={day.key} className="flex flex-col">
+              <GroupSeparator
+                first={index === 0 && visibleCredits.length === 0}
+                label={formatDay(day.key)}
+              />
+              <Rows>
+                {day.items.map(tx => (
+                  <TransactionRow
+                    key={tx.id}
+                    transaction={tx}
+                    account={byId.get(tx.account_id)}
+                    superUser={user.super_user}
+                    onApplyCredit={
+                      selectedCredit ? () => setApplyTo(tx) : undefined
+                    }
+                    creditApplied={
+                      selectedCredit != null &&
+                      tx.credits.some(ct => ct.credit_id === selectedCredit.id)
+                    }
+                  />
+                ))}
+              </Rows>
+            </div>
+          )
+        })}
 
-      {!isPending && visible.length === 0 && (
+      {!loading && visible.length === 0 && (
         <EmptyState>
           {missingEurOnly && inAccount.length > 0
             ? "Every transaction has an EUR amount."
