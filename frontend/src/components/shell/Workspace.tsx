@@ -1,8 +1,8 @@
-import type { ReactNode } from "react"
 
 import { describeError } from "@/api/client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import type { ReactNode } from "react"
 
 /**
  * The page body. Desktop: one card with a sidebar and the list pane, whose

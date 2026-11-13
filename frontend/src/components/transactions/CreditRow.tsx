@@ -1,9 +1,9 @@
 import { Link as LinkIcon } from "lucide-react"
 
-import type { Account, Credit } from "@/types"
 import { Amount, Row, RowAction, Swatch } from "@/components/list/Row"
 import { creditRemainder } from "@/lib/derive"
 import { formatUsd } from "@/lib/money"
+import type { Account, Credit } from "@/types"
 
 export function CreditRow({
   credit,

@@ -1,14 +1,6 @@
 import { Check, Link as LinkIcon } from "lucide-react"
 import { useState } from "react"
 
-import {
-  AmountField,
-  ContextBox,
-  ContextLine,
-  Dialog,
-  useInvalidFields,
-} from "./Dialog"
-import type { Account, Credit, Transaction } from "@/types"
 import { useApplyCredit } from "@/api/mutations"
 import { Swatch } from "@/components/list/Row"
 import { Button } from "@/components/ui/button"
@@ -20,6 +12,14 @@ import {
   suggestedAmountAfterCredit,
 } from "@/lib/derive"
 import { formatAmount, formatUsd } from "@/lib/money"
+import {
+  AmountField,
+  ContextBox,
+  ContextLine,
+  Dialog,
+  useInvalidFields,
+} from "./Dialog"
+import type { Account, Credit, Transaction } from "@/types"
 
 /** Applies (part of) a credit to a transaction. */
 export function ApplyCreditDialog({

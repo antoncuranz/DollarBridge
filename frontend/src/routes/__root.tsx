@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router"
-import type { QueryClient } from "@tanstack/react-query"
 
 import { userQuery } from "@/api/queries"
 import { ListSkeleton } from "@/components/list/ListSkeleton"
@@ -11,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 import { usePreferences } from "@/store"
+import type { QueryClient } from "@tanstack/react-query"
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {

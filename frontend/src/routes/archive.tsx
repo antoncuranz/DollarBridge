@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router"
 import { addMonths } from "date-fns"
 import { ChevronLeft, ChevronRight, Undo2 } from "lucide-react"
 
-import type { Transaction } from "@/types"
 import { useUnprocessPayment } from "@/api/mutations"
 import {
   feesQuery,
@@ -43,6 +42,7 @@ import { groupBy } from "@/lib/derive"
 import { formatAmount, formatEur, formatSigned, formatUsd } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import { Status } from "@/types"
+import type { Transaction } from "@/types"
 
 type Search = { month?: string; account?: number }
 

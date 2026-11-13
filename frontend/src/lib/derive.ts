@@ -1,3 +1,4 @@
+import { Status } from "@/types"
 import type {
   Account,
   Credit,
@@ -7,7 +8,6 @@ import type {
   Transaction,
   TransactionAmountMap,
 } from "@/types"
-import { Status } from "@/types"
 
 const sum = (values: Array<number>) => values.reduce((a, b) => a + b, 0)
 

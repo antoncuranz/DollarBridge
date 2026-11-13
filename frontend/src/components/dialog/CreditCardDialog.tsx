@@ -4,9 +4,6 @@ import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Dialog, Field } from "./Dialog"
-import { PlaidAccountSelect } from "./PlaidAccountSelect"
-import type { Account, BankAccount, Issuer, PlaidConnection } from "@/types"
 import { useSaveAccount } from "@/api/mutations"
 import { useUser } from "@/api/useUser"
 import { Button } from "@/components/ui/button"
@@ -21,6 +18,9 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
+import { PlaidAccountSelect } from "./PlaidAccountSelect"
+import { Dialog, Field } from "./Dialog"
+import type { Account, BankAccount, Issuer, PlaidConnection } from "@/types"
 
 const optionalInteger = (min: number, max: number, message: string) =>
   z

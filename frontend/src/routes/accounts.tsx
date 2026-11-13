@@ -2,9 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Cable, Landmark, MoreHorizontal, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
-import type { ReactNode } from "react"
 
-import type { Account, BankAccount, PlaidConnection } from "@/types"
 import { useDeleteConnection, useDiscoverPlaidAccounts } from "@/api/mutations"
 import {
   bankAccountsQuery,
@@ -38,6 +36,8 @@ import {
 import { ordinal, updateAge } from "@/lib/dates"
 import { formatEur, formatGrouped, formatUsd } from "@/lib/money"
 import { cn, possessive } from "@/lib/utils"
+import type { Account, BankAccount, PlaidConnection } from "@/types"
+import type { ReactNode } from "react"
 
 export const Route = createFileRoute("/accounts")({
   component: AccountsPage,

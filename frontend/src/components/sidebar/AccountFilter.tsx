@@ -1,10 +1,10 @@
-import type { ReactNode } from "react"
 
-import type { Account, AccountBalances, BankAccount } from "@/types"
 import { Swatch } from "@/components/list/Row"
 import { updateAge } from "@/lib/dates"
 import { formatEur, formatGrouped, formatUsd } from "@/lib/money"
 import { cn, possessive } from "@/lib/utils"
+import type { Account, AccountBalances, BankAccount } from "@/types"
+import type { ReactNode } from "react"
 
 export function SidebarHeader({
   title,
