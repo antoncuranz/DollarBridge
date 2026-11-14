@@ -3,5 +3,15 @@
   "ignorePatterns": ["src/routeTree.gen.ts"],
   "semi": false,
   "arrowParens": "avoid",
-  "printWidth": 80
+  "printWidth": 80,
+  "sortImports": {
+    "groups": [
+      "builtin",
+      "external",
+      "internal",
+      ["parent", "sibling", "index"],
+      "type"
+    ],
+    "newlinesBetween": false
+  }
 }

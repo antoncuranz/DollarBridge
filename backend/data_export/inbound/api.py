@@ -11,10 +11,12 @@ router = APIRouter(prefix="/api/export", tags=["Data Export"])
 
 
 @router.post("/actual/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
-def export_transactions_to_actual(user: Annotated[User, Depends(get_current_user)],
-                                  session: Annotated[Session, Depends(get_session)],
-                                  data_export: Annotated[DataExportFacade, Depends()],
-                                  account_id: int):
+def export_transactions_to_actual(
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
+    data_export: Annotated[DataExportFacade, Depends()],
+    account_id: int,
+):
     data_export.export_transactions(session, user, account_id)
     data_export.update_transactions(session, user, account_id)
     session.commit()

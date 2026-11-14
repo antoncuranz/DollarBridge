@@ -2,7 +2,6 @@ import { ContextMenu } from "@base-ui/react/context-menu"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 
-
 export type RowMenuItem = {
   label: string
   onSelect: () => void

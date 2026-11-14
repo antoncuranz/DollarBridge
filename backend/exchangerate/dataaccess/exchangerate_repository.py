@@ -8,15 +8,21 @@ from models import ExchangeRate, Transaction
 
 
 class ExchangeRateRepository:
-    def get_exchange_rate(self, session: Session, date: datetime.date, source: ExchangeRate.Source) -> Optional[ExchangeRate]:
+    def get_exchange_rate(
+        self, session: Session, date: datetime.date, source: ExchangeRate.Source
+    ) -> Optional[ExchangeRate]:
         stmt = select(ExchangeRate).where((ExchangeRate.date == date) & (ExchangeRate.source == source.value))
         return session.exec(stmt).first()
-    
-    def persist_exchange_rate(self, session: Session, date: datetime.date, source: ExchangeRate.Source, rate: Decimal) -> ExchangeRate:
+
+    def persist_exchange_rate(
+        self, session: Session, date: datetime.date, source: ExchangeRate.Source, rate: Decimal
+    ) -> ExchangeRate:
         exchange_rate = ExchangeRate(date=date, source=source.value, exchange_rate=rate)
         session.add(exchange_rate)
         return exchange_rate
 
     def get_transactions_without_eur_amount(self, session: Session, account_id: int) -> List[Transaction]:
-        stmt = select(Transaction).where((col(Transaction.account_id) == account_id) & col(Transaction.amount_eur).is_(None))
+        stmt = select(Transaction).where(
+            (col(Transaction.account_id) == account_id) & col(Transaction.amount_eur).is_(None)
+        )
         return list(session.exec(stmt).all())

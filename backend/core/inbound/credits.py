@@ -25,16 +25,23 @@ class CreditTO(SQLModel):
 
 
 @router.get("", response_model=List[CreditTO])
-def get_credits(user: Annotated[User, Depends(get_current_user)],
-                session: Annotated[Session, Depends(get_session)],
-                credit_service: Annotated[CreditService, Depends()],
-                account: int | None = None, usable: bool | None = None):
+def get_credits(
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
+    credit_service: Annotated[CreditService, Depends()],
+    account: int | None = None,
+    usable: bool | None = None,
+):
     return credit_service.get_credits(session, user, account, usable)
 
 
 @router.put("/{credit_id}", status_code=status.HTTP_204_NO_CONTENT)
-def update_credit(user: Annotated[User, Depends(get_current_user)],
-                  session: Annotated[Session, Depends(get_session)],
-                  credit_service: Annotated[CreditService, Depends()],
-                  credit_id: int, amount: int, transaction: int):
+def update_credit(
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
+    credit_service: Annotated[CreditService, Depends()],
+    credit_id: int,
+    amount: int,
+    transaction: int,
+):
     credit_service.update_credit(session, user, credit_id, transaction, amount)

@@ -14,8 +14,9 @@ from models import Account, User
 @dataclass(frozen=True)
 class Cycle:
     """One billing cycle of a credit card."""
-    due_date: datetime.date        # the due date printed on the statement
-    payment_date: datetime.date    # the day autopay posts on the card
+
+    due_date: datetime.date  # the due date printed on the statement
+    payment_date: datetime.date  # the day autopay posts on the card
     statement_date: datetime.date  # the day the statement closes
 
 
@@ -26,7 +27,11 @@ class DateService:
     def get_dates(self, session: Session, user: User, year: int, month: int):
         """Payment and statement dates of every account that fall into the given month."""
         result = {}
-        accounts = self.repository.get_all_accounts(session) if user.super_user else self.repository.get_accounts_of_user(session, user)
+        accounts = (
+            self.repository.get_all_accounts(session)
+            if user.super_user
+            else self.repository.get_accounts_of_user(session, user)
+        )
         for account in accounts:
             if account.due_day is None:
                 continue

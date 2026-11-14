@@ -47,8 +47,7 @@ class BankAccountTO(SQLModel):
 
 
 class AccountService:
-    def __init__(self, store: Annotated[Store, Depends()],
-                 data_import: Annotated[DataImportFacade, Depends()]):
+    def __init__(self, store: Annotated[Store, Depends()], data_import: Annotated[DataImportFacade, Depends()]):
         self.store = store
         self.data_import = data_import
 
@@ -57,23 +56,31 @@ class AccountService:
             return self.store.get_all_accounts(session)
         else:
             return self.store.get_accounts_of_user(session, user)
-    
+
     def create_account(self, session: Session, user: User, create_account: CreateAccount) -> Account:
-        account = self.store.create_account(session, user, bank_account_id=create_account.bank_account_id,
-                          actual_id=create_account.actual_id, plaid_account_id=create_account.plaid_account_id,
-                          name=create_account.name, institution=create_account.institution,
-                          issuer=create_account.issuer.value if create_account.issuer else None,
-                          due_day=create_account.due_day, autopay_offset=create_account.autopay_offset,
-                          color=create_account.color, target_spend=create_account.target_spend,
-                          active=create_account.active)
+        account = self.store.create_account(
+            session,
+            user,
+            bank_account_id=create_account.bank_account_id,
+            actual_id=create_account.actual_id,
+            plaid_account_id=create_account.plaid_account_id,
+            name=create_account.name,
+            institution=create_account.institution,
+            issuer=create_account.issuer.value if create_account.issuer else None,
+            due_day=create_account.due_day,
+            autopay_offset=create_account.autopay_offset,
+            color=create_account.color,
+            target_spend=create_account.target_spend,
+            active=create_account.active,
+        )
         session.commit()
         return account
-    
+
     def modify_account(self, session: Session, user: User, account_id: int, create_account: CreateAccount):
         account = self.store.get_account(session, user, account_id)
         if not account:
             raise HTTPException(404)
-        
+
         account.name = create_account.name
         account.institution = create_account.institution
         account.issuer = create_account.issuer.value if create_account.issuer else None
@@ -92,27 +99,39 @@ class AccountService:
             bank_accounts = self.store.get_all_bank_accounts(session)
         else:
             bank_accounts = self.store.get_bank_accounts_of_user(session, user)
-            
+
         def map_bank_account(bank_account: BankAccount):
-            return BankAccountTO.model_validate(bank_account, update={
-                "last_successful_update": self.data_import.get_last_successful_update(session, bank_account.plaid_account_id) if bank_account.plaid_account_id else None
-            })
+            return BankAccountTO.model_validate(
+                bank_account,
+                update={
+                    "last_successful_update": self.data_import.get_last_successful_update(
+                        session, bank_account.plaid_account_id
+                    )
+                    if bank_account.plaid_account_id
+                    else None
+                },
+            )
 
         return [map_bank_account(bank_account) for bank_account in bank_accounts]
 
-
     def create_bank_account(self, session: Session, user: User, create_bank_account: CreateBankAccount) -> BankAccount:
-        bank_account = self.store.create_bank_account(session, user, name=create_bank_account.name,
-                                                      institution=create_bank_account.institution,
-                                                      plaid_account_id=create_bank_account.plaid_account_id)
+        bank_account = self.store.create_bank_account(
+            session,
+            user,
+            name=create_bank_account.name,
+            institution=create_bank_account.institution,
+            plaid_account_id=create_bank_account.plaid_account_id,
+        )
         session.commit()
         return bank_account
 
-    def modify_bank_account(self, session: Session, user: User, bank_account_id: int, create_bank_account: CreateBankAccount):
+    def modify_bank_account(
+        self, session: Session, user: User, bank_account_id: int, create_bank_account: CreateBankAccount
+    ):
         bank_account = self.store.get_bank_account(session, user, bank_account_id)
         if not bank_account:
             raise HTTPException(404)
-        
+
         bank_account.name = create_bank_account.name
         bank_account.institution = create_bank_account.institution
         bank_account.plaid_account_id = create_bank_account.plaid_account_id

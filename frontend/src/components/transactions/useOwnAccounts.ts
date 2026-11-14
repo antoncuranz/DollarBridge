@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
-
 import { accountBalancesQuery, accountsQuery } from "@/api/queries"
 import { useUser } from "@/api/useUser"
 import { accountById } from "@/lib/derive"

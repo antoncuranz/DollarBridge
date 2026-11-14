@@ -20,9 +20,16 @@ class TransactionRepository:
         stmt = select(Transaction).where(col(Transaction.id).in_(tx_ids))
         return list(session.exec(stmt).all())
 
-    def get_transactions(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None,
-                         paid_from: datetime.date | None = None, paid_to: datetime.date | None = None) -> List[Transaction]:
-        query = (Account.user_id == user.id)
+    def get_transactions(
+        self,
+        session: Session,
+        user: User,
+        account_id: int | None = None,
+        paid: bool | None = None,
+        paid_from: datetime.date | None = None,
+        paid_to: datetime.date | None = None,
+    ) -> List[Transaction]:
+        query = Account.user_id == user.id
 
         if paid is True:
             query = query & (Transaction.status == Transaction.Status.PAID.value)
@@ -42,25 +49,33 @@ class TransactionRepository:
         return list(session.exec(stmt).all())
 
     def get_paid_transactions_by_payment(self, session: Session, payment_id: int) -> List[Transaction]:
-        stmt = select(Transaction).join(Account).where(
-            (Transaction.payment_id == payment_id) &
-            (Transaction.status == Transaction.Status.PAID.value)
+        stmt = (
+            select(Transaction)
+            .join(Account)
+            .where((Transaction.payment_id == payment_id) & (Transaction.status == Transaction.Status.PAID.value))
         )
         return list(session.exec(stmt).all())
 
     def get_posted_transactions_by_account(self, session: Session, account_id: int) -> List[Transaction]:
-        stmt = select(Transaction).where(
-            (Transaction.status == Transaction.Status.POSTED.value) &
-            (Transaction.account_id == account_id)
-        ).order_by(col(Transaction.date), col(Transaction.id))
+        stmt = (
+            select(Transaction)
+            .where((Transaction.status == Transaction.Status.POSTED.value) & (Transaction.account_id == account_id))
+            .order_by(col(Transaction.date), col(Transaction.id))
+        )
         return list(session.exec(stmt).all())
 
-    def get_posted_transactions_missing_amount_eur_by_account(self, session: Session, account_id: int) -> List[Transaction]:
-        stmt = select(Transaction).where(
-            (col(Transaction.status) == Transaction.Status.POSTED.value) &
-            (col(Transaction.account_id) == account_id) &
-            col(Transaction.amount_eur).is_(None)
-        ).order_by(col(Transaction.date), col(Transaction.id))
+    def get_posted_transactions_missing_amount_eur_by_account(
+        self, session: Session, account_id: int
+    ) -> List[Transaction]:
+        stmt = (
+            select(Transaction)
+            .where(
+                (col(Transaction.status) == Transaction.Status.POSTED.value)
+                & (col(Transaction.account_id) == account_id)
+                & col(Transaction.amount_eur).is_(None)
+            )
+            .order_by(col(Transaction.date), col(Transaction.id))
+        )
         return list(session.exec(stmt).all())
 
     def get_posted_transaction_amount(self, session: Session, account_id: int) -> int:
@@ -71,8 +86,9 @@ class TransactionRepository:
 
     def get_pending_transaction_amount(self, session: Session, account_id: int) -> int:
         stmt = select(func.sum(Transaction.amount_usd)).where(
-            (col(Transaction.account_id) == account_id) & (col(Transaction.status) == Transaction.Status.PENDING.value) &
-            col(Transaction.ignore).is_not(True)
+            (col(Transaction.account_id) == account_id)
+            & (col(Transaction.status) == Transaction.Status.PENDING.value)
+            & col(Transaction.ignore).is_not(True)
         )
         return session.exec(stmt).first() or 0
 
@@ -90,20 +106,23 @@ class TransactionRepository:
         )
         return session.exec(stmt).first() or 0
 
-    def get_fees_and_risk_eur(self, session: Session, paid_from: datetime.date | None = None,
-                              paid_to: datetime.date | None = None) -> int:
+    def get_fees_and_risk_eur(
+        self, session: Session, paid_from: datetime.date | None = None, paid_to: datetime.date | None = None
+    ) -> int:
         return self._sum_paid(session, col(Transaction.fees_and_risk_eur), paid_from, paid_to)
 
-    def get_paid_amount_eur(self, session: Session, paid_from: datetime.date | None = None,
-                            paid_to: datetime.date | None = None) -> int:
+    def get_paid_amount_eur(
+        self, session: Session, paid_from: datetime.date | None = None, paid_to: datetime.date | None = None
+    ) -> int:
         return self._sum_paid(session, col(Transaction.amount_eur), paid_from, paid_to)
 
     @staticmethod
     def _sum_paid(session: Session, column, paid_from: datetime.date | None, paid_to: datetime.date | None) -> int:
         stmt = select(func.sum(column)).where(Transaction.status == Transaction.Status.PAID.value)
         if paid_from is not None or paid_to is not None:
-            stmt = stmt.join(Payment, col(Transaction.payment_id) == col(Payment.id))\
-                .where(_payment_date_in_range(paid_from, paid_to))
+            stmt = stmt.join(Payment, col(Transaction.payment_id) == col(Payment.id)).where(
+                _payment_date_in_range(paid_from, paid_to)
+            )
         return session.exec(stmt).first() or 0
 
 

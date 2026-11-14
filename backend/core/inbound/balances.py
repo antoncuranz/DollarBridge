@@ -23,9 +23,11 @@ class BalancesTO(SQLModel):
 
 
 @router.get("", response_model=BalancesTO)
-def get_balances(_: Annotated[None, Depends(require_super_user)],
-                 session: Annotated[Session, Depends(get_session)],
-                 balance_service: Annotated[BalanceService, Depends()]):
+def get_balances(
+    _: Annotated[None, Depends(require_super_user)],
+    session: Annotated[Session, Depends(get_session)],
+    balance_service: Annotated[BalanceService, Depends()],
+):
     posted = balance_service.get_balance_posted(session)
     pending = balance_service.get_balance_pending(session)
     credits = balance_service.get_balance_credits(session)
@@ -39,7 +41,7 @@ def get_balances(_: Annotated[None, Depends(require_super_user)],
         credits=credits,
         exchanged=exchanged,
         virtual_account=balance_service.get_virtual_account_balance(session),
-        avg_exchange_rate=balance_service.get_avg_exchange_rate(session)
+        avg_exchange_rate=balance_service.get_avg_exchange_rate(session),
     )
 
 
@@ -52,9 +54,11 @@ class AccountBalanceTO(SQLModel):
 
 
 @router.get("/accounts", response_model=Dict[int, AccountBalanceTO])
-def get_account_balances(user: Annotated[User, Depends(get_current_user)],
-                         session: Annotated[Session, Depends(get_session)],
-                         balance_service: Annotated[BalanceService, Depends()]):
+def get_account_balances(
+    user: Annotated[User, Depends(get_current_user)],
+    session: Annotated[Session, Depends(get_session)],
+    balance_service: Annotated[BalanceService, Depends()],
+):
     return balance_service.get_account_balances(session, user)
 
 
@@ -64,13 +68,15 @@ class FeeSummaryTO(SQLModel):
 
 
 @router.get("/fees", response_model=FeeSummaryTO)
-def get_fee_summary(_: Annotated[None, Depends(require_super_user)],
-                    session: Annotated[Session, Depends(get_session)],
-                    balance_service: Annotated[BalanceService, Depends()],
-                    date_from: Annotated[date | None, Query(alias="from")] = None,
-                    date_to: Annotated[date | None, Query(alias="to")] = None):
+def get_fee_summary(
+    _: Annotated[None, Depends(require_super_user)],
+    session: Annotated[Session, Depends(get_session)],
+    balance_service: Annotated[BalanceService, Depends()],
+    date_from: Annotated[date | None, Query(alias="from")] = None,
+    date_to: Annotated[date | None, Query(alias="to")] = None,
+):
     """Fees of paid transactions. The optional range refers to the date of the settling payment."""
     return FeeSummaryTO(
         fees_and_risk_eur=balance_service.get_fees_and_risk_eur(session, date_from, date_to),
-        paid_eur=balance_service.get_paid_amount_eur(session, date_from, date_to)
+        paid_eur=balance_service.get_paid_amount_eur(session, date_from, date_to),
     )

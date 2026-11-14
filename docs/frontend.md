@@ -17,7 +17,7 @@ cd frontend && npm ci && npm run dev   # http://localhost:3000, proxies /api to 
 
 | Command | What it does |
 |---|---|
-| `npm run lint` | oxlint (type-aware) and ESLint |
+| `npm run lint` | oxlint (type-aware) |
 | `npm run fix` | oxfmt, then lint auto-fixes |
 | `npm run typecheck` | `tsgo --noEmit` |
 | `npm test` | Vitest (jsdom, Testing Library) |

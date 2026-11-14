@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":disableRateLimiting", ":automergeMinor"],
+  "extends": ["config:recommended", ":disableRateLimiting", ":automergeMinor", "helpers:pinGitHubActionDigests"],
   "dependencyDashboardTitle": "Renovate Dashboard 🤖",
   "commitMessageExtra": "from {{{displayFrom}}} to {{{displayTo}}}",
   "customManagers": [

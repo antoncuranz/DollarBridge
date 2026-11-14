@@ -23,7 +23,7 @@ class AbstractImporter(ABC):
     @abc.abstractmethod
     def import_transactions(self, session: Session, account: Account):
         pass
-    
+
     @abc.abstractmethod
     def _make_transaction_args(self, tx, account_id):
         pass
@@ -31,7 +31,7 @@ class AbstractImporter(ABC):
     def _process_payment(self, session: Session, account: Account, tx) -> Payment:
         account_id = require_persisted_id(account)
         args = self._make_transaction_args(tx, account_id)
-        
+
         pending_payment = self.repository.get_pending_payment(session, account_id, args["date"], args["amount_usd"])
         if pending_payment:
             print("Matching payment " + str(pending_payment.id))
@@ -47,14 +47,14 @@ class AbstractImporter(ABC):
             self._send_notification("A Payment could not be matched")
             print("Error: Could not find pending Payment for {}.".format(self._print_tx(tx)))
             session.commit()
-        
+
         return model
-    
+
     def _print_tx(self, plaid_tx):
         return "(id: {}; date: {}; name: {}; amount: {})".format(
             plaid_tx["transaction_id"], plaid_tx["date"], plaid_tx["name"], plaid_tx["amount"]
         )
-            
+
     def _posted_date(self, tx):
         """The day the transaction posted on the card, if the source knows it."""
         return None
@@ -73,10 +73,13 @@ class AbstractImporter(ABC):
 
     # TODO: move somewhere else!
     def _send_notification(self, msg, priority=0):
-        requests.post("https://api.pushover.net/1/messages.json", data = {
-            "token": config.pushover_token,
-            "user": config.pushover_user,
-            "message": msg,
-            "priority": priority,
-            "device": "iphone"
-        })
+        requests.post(
+            "https://api.pushover.net/1/messages.json",
+            data={
+                "token": config.pushover_token,
+                "user": config.pushover_user,
+                "message": msg,
+                "priority": priority,
+                "device": "iphone",
+            },
+        )

@@ -12,13 +12,16 @@ from persistence import require_persisted_id
 
 
 class BalanceService:
-    def __init__(self, store: Annotated[Store, Depends()],
-                 exchange_rate: Annotated[ExchangeRateFacade, Depends()],
-                 data_import: Annotated[DataImportFacade, Depends()]):
+    def __init__(
+        self,
+        store: Annotated[Store, Depends()],
+        exchange_rate: Annotated[ExchangeRateFacade, Depends()],
+        data_import: Annotated[DataImportFacade, Depends()],
+    ):
         self.store = store
         self.exchange_rate = exchange_rate
         self.data_import = data_import
-        
+
     def calc_balance_exchanged(self, session: Session) -> int:
         balance = 0
 
@@ -27,13 +30,19 @@ class BalanceService:
 
         return balance
 
-    def calc_exchange_remaining(self, session: Session, exchange: Exchange, include_pending=False, include_posted=False) -> int:
+    def calc_exchange_remaining(
+        self, session: Session, exchange: Exchange, include_pending=False, include_posted=False
+    ) -> int:
         balance = exchange.amount_usd
         query = self.store.get_exchange_payments_by_exchange(session, require_persisted_id(exchange))
 
         for exchange_payment in query:
             status = exchange_payment.payment.status_enum
-            if (status == Payment.Status.PROCESSED) or (status == Payment.Status.PENDING and include_pending) or (status == Payment.Status.POSTED and include_posted):
+            if (
+                (status == Payment.Status.PROCESSED)
+                or (status == Payment.Status.PENDING and include_pending)
+                or (status == Payment.Status.POSTED and include_posted)
+            ):
                 balance -= exchange_payment.amount
 
         if balance < 0:
@@ -82,21 +91,27 @@ class BalanceService:
 
     def get_account_balances(self, session: Session, user: User):
         result = {}
-        accounts = self.store.get_all_accounts(session) if user.super_user else self.store.get_accounts_of_user(session, user)
+        accounts = (
+            self.store.get_all_accounts(session) if user.super_user else self.store.get_accounts_of_user(session, user)
+        )
         for account in accounts:
             account_id = require_persisted_id(account)
             posted_tx = self.store.get_posted_transaction_amount(session, account_id)
             posted_credits = self.store.get_posted_credit_amount(session, account_id)
             posted_payments = self.store.get_posted_payment_amount(session, account_id)
             pending = self.store.get_pending_transaction_amount(session, account_id)
-            last_successful_update = self.data_import.get_last_successful_update(session, account.plaid_account_id) if account.plaid_account_id else None
+            last_successful_update = (
+                self.data_import.get_last_successful_update(session, account.plaid_account_id)
+                if account.plaid_account_id
+                else None
+            )
 
             result[account_id] = {
                 "posted": posted_tx - posted_credits - posted_payments,
                 "pending": pending,
                 "total_spent": posted_tx,
                 "total_credits": posted_credits,
-                "last_successful_update": last_successful_update
+                "last_successful_update": last_successful_update,
             }
 
         return result
@@ -142,23 +157,27 @@ class BalanceService:
             remaining_payments -= minimum
             remaining -= minimum
 
-            virtual_balance += round(Decimal(remaining)/exchange.amount_usd * exchange.amount_eur)
+            virtual_balance += round(Decimal(remaining) / exchange.amount_usd * exchange.amount_eur)
 
         if virtual_balance >= 0:
             return str(virtual_balance)
         else:
             return "negative"
 
-    def get_fees_and_risk_eur(self, session: Session, paid_from: datetime.date | None = None,
-                              paid_to: datetime.date | None = None) -> int:
+    def get_fees_and_risk_eur(
+        self, session: Session, paid_from: datetime.date | None = None, paid_to: datetime.date | None = None
+    ) -> int:
         return self.store.get_fees_and_risk_eur(session, paid_from, paid_to)
 
-    def get_paid_amount_eur(self, session: Session, paid_from: datetime.date | None = None,
-                            paid_to: datetime.date | None = None) -> int:
+    def get_paid_amount_eur(
+        self, session: Session, paid_from: datetime.date | None = None, paid_to: datetime.date | None = None
+    ) -> int:
         return self.store.get_paid_amount_eur(session, paid_from, paid_to)
 
     def get_avg_exchange_rate(self, session: Session) -> Decimal:
-        transactions = self.store.get_all_posted_transactions(session) + self.store.get_all_pending_transactions(session)
+        transactions = self.store.get_all_posted_transactions(session) + self.store.get_all_pending_transactions(
+            session
+        )
         transactions.sort(key=lambda tx: tx.date)
 
         already_exchanged_usd = 0

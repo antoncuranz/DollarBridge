@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
-import type { ReactNode } from "react"
-
 import type { Account } from "@/types"
+import type { ReactNode } from "react"
 
 /** The small card-shaped colour chip that identifies an account. */
 export function Swatch({

@@ -1,6 +1,6 @@
 # Backend development
 
-Python 3.12 and [uv](https://docs.astral.sh/uv/) are required. From this directory:
+Python 3.15 and [uv](https://docs.astral.sh/uv/) are required. From this directory:
 
 ```sh
 uv sync --locked

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest"
-
 import { queryFailure } from "./queries"
 
 const ok = { data: [], error: null, refetch: vi.fn() }

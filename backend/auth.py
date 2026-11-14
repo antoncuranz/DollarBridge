@@ -22,7 +22,9 @@ def _extract_username(request: Request) -> str | None:
     if authorization:
         scheme, _, token = authorization.partition(" ")
         if scheme != "Bearer" or not token:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized: Bearer token is required.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized: Bearer token is required."
+            )
 
         try:
             _, payload, _ = token.split(".")
@@ -39,6 +41,7 @@ def _extract_username(request: Request) -> str | None:
 
     return request.headers.get("X-Auth-Request-Preferred-Username")
 
+
 def get_current_user(request: Request, session: Annotated[Session, Depends(get_session)]):
     username = _extract_username(request)
     if not username:
@@ -49,11 +52,15 @@ def get_current_user(request: Request, session: Annotated[Session, Depends(get_s
         return session.exec(stmt).one()
     except Exception:
         print(traceback.format_exc())
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized: User not found in database.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized: User not found in database."
+        )
+
 
 def verify_user_header(request: Request, session: Annotated[Session, Depends(get_session)]):
     get_current_user(request, session)
-    
+
+
 def require_super_user(request: Request, session: Annotated[Session, Depends(get_session)]):
     if not get_current_user(request, session).super_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
