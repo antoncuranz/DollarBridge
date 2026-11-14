@@ -14,6 +14,11 @@ FROM nginxinc/nginx-unprivileged:1.31-alpine
 
 ENV BACKEND_URL=http://money-tracking-backend
 
+# Pick up Alpine security fixes that the base image doesn't include yet.
+USER root
+RUN apk upgrade --no-cache
+USER 101
+
 # rendered with envsubst to /etc/nginx/conf.d/default.conf at container start
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /build/dist /var/www
