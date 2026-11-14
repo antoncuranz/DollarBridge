@@ -7,7 +7,7 @@ DB_PORT       ?= 5433
 BACKEND_PORT  ?= 8000
 FRONTEND_PORT ?= 3000
 
-.PHONY: init-worktree dev db db-reset db-load db-stop backend frontend ci ci-backend ci-frontend ci-lint
+.PHONY: init-worktree dev dev-frontend db db-reset db-load db-stop backend frontend ci ci-backend ci-frontend ci-lint
 
 ## dependencies of a fresh checkout or worktree (used by orca.yaml)
 init-worktree:
@@ -15,7 +15,14 @@ init-worktree:
 	cd frontend && npm ci --prefer-offline --no-audit --no-fund
 
 dev: db frontend/node_modules
-	@$(MAKE) --no-print-directory -j2 backend frontend
+	@$(MAKE) --no-print-directory -j2 backend dev-frontend
+
+# Vite starts once the backend answers, and without terminal input: its keyboard
+# shortcuts would swallow the terminal's reply to the color query `fastapi dev`
+# sends on startup, which leaves the backend hanging.
+dev-frontend:
+	@until curl -sf -o /dev/null http://127.0.0.1:$(BACKEND_PORT)/docs; do sleep 1; done
+	@$(MAKE) --no-print-directory frontend < /dev/null
 
 PSQL = PGPASSWORD=postgres psql -h localhost -p $(DB_PORT) -U postgres -d postgres
 
