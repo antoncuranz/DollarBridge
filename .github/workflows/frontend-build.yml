@@ -7,11 +7,15 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-*.yml'
+      - 'ci/frontend-checks.sh'
+      - 'ci/lib.sh'
       - '.github/workflows/docker-image.yml'
   pull_request:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-*.yml'
+      - 'ci/frontend-checks.sh'
+      - 'ci/lib.sh'
       - '.github/workflows/docker-image.yml'
 
 concurrency:

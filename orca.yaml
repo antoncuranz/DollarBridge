@@ -1,0 +1,13 @@
+# Orca IDE: https://www.onorca.dev/docs/model/orca-yaml
+scripts:
+  # runs in every new worktree: installs backend and frontend dependencies
+  setup: make -C "$ORCA_WORKTREE_PATH" init-worktree
+
+# agents run ruff/mypy/vitest early, so let them wait for the dependencies
+setupAgentStartupPolicy: wait-for-setup
+
+defaultTabs:
+  - title: backend
+    command: cd backend
+  - title: frontend
+    command: cd frontend

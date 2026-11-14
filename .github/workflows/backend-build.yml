@@ -7,11 +7,15 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend-*.yml'
+      - 'ci/backend-checks.sh'
+      - 'ci/lib.sh'
       - '.github/workflows/docker-image.yml'
   pull_request:
     paths:
       - 'backend/**'
       - '.github/workflows/backend-*.yml'
+      - 'ci/backend-checks.sh'
+      - 'ci/lib.sh'
       - '.github/workflows/docker-image.yml'
 
 concurrency:
