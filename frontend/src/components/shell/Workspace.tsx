@@ -29,12 +29,12 @@ export function Workspace({
   children: ReactNode
 }) {
   return (
-    <div className="flex min-h-0 flex-1 overflow-clip bg-card md:rounded-[1.75rem] md:border md:shadow-pane">
+    <div className="flex flex-1 bg-card md:min-h-0 md:overflow-clip md:rounded-[1.75rem] md:border md:shadow-pane">
       <aside className="no-scrollbar hidden w-80 shrink-0 flex-col gap-1.5 overflow-y-auto border-r px-3 pt-2 pb-4 md:flex">
         {sidebar}
       </aside>
       <section className="relative flex min-w-0 flex-1 flex-col">
-        <div className="no-scrollbar flex flex-1 flex-col overflow-y-auto pt-3 pb-28 md:pt-18 md:pb-24">
+        <div className="no-scrollbar flex flex-1 flex-col pt-3 md:overflow-y-auto pb-28 md:pt-18 md:pb-24">
           {mobileTop && (
             <div className="flex flex-col gap-3 pt-1 pb-1 md:hidden">
               {mobileTop}
@@ -47,7 +47,7 @@ export function Workspace({
         {thumb && (
           <div
             className={cn(
-              "absolute right-5 z-30 flex flex-col-reverse items-center gap-3 md:hidden",
+              "fixed right-5 z-30 flex flex-col-reverse items-center gap-3 md:hidden",
               thumbRaised ? "bottom-22" : "bottom-6",
             )}
           >
