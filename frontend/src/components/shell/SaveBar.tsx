@@ -58,7 +58,7 @@ export function SaveBar({
       <button
         type="button"
         aria-label={saveLabel}
-        className="absolute right-5 bottom-6 z-30 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 disabled:opacity-60 md:hidden"
+        className="fixed right-5 bottom-6 z-30 flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 disabled:opacity-60 md:hidden"
         disabled={saving}
         onClick={onSave}
       >

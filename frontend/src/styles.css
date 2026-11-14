@@ -108,12 +108,15 @@
     border-color: var(--border);
   }
 
-  /* the app fills the window and scrolls inside its panes, never as a page */
-  html,
-  body,
-  #app {
-    height: 100%;
-    overflow: hidden;
+  /* desktop: the app fills the window and scrolls inside its panes. mobile:
+     the page itself scrolls, so iOS Safari shows content beneath its toolbars */
+  @media (width >= 48rem) {
+    html,
+    body,
+    #app {
+      height: 100%;
+      overflow: hidden;
+    }
   }
 
   body {

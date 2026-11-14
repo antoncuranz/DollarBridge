@@ -24,7 +24,7 @@ function Root() {
   return (
     <div
       className={cn(
-        "root flex h-dvh flex-col bg-card md:bg-background md:px-6 md:pb-4",
+        "root flex min-h-dvh flex-col md:h-dvh bg-card md:bg-background md:px-6 md:pb-4",
         privacyMode && "privacy",
       )}
     >
