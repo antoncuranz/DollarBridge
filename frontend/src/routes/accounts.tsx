@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Cable, Landmark, MoreHorizontal, Pencil, Plus } from "lucide-react"
 import { useState } from "react"
-
 import { useDeleteConnection, useDiscoverPlaidAccounts } from "@/api/mutations"
 import {
   bankAccountsQuery,

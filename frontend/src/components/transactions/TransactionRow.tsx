@@ -1,5 +1,4 @@
 import { Link as LinkIcon } from "lucide-react"
-
 import { useCashback } from "@/api/mutations"
 import { EurField } from "@/components/list/EurField"
 import { Amount, Row, Swatch } from "@/components/list/Row"

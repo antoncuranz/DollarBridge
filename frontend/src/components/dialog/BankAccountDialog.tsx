@@ -3,13 +3,12 @@ import { Check } from "lucide-react"
 import { useId, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { useSaveBankAccount } from "@/api/mutations"
 import { useUser } from "@/api/useUser"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlaidAccountSelect } from "./PlaidAccountSelect"
 import { Dialog, Field } from "./Dialog"
+import { PlaidAccountSelect } from "./PlaidAccountSelect"
 import type { BankAccount, PlaidConnection } from "@/types"
 
 const schema = z.object({

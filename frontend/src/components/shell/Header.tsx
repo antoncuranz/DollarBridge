@@ -1,8 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router"
 import { Moon, Sun } from "lucide-react"
-
 import { useEffect, useRef } from "react"
-
 import { useTheme } from "@/components/provider/ThemeProvider"
 import { Button } from "@/components/ui/button"
 import {

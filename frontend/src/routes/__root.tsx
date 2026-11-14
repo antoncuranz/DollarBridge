@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router"
-
 import { userQuery } from "@/api/queries"
 import { ListSkeleton } from "@/components/list/ListSkeleton"
 import { Header } from "@/components/shell/Header"

@@ -93,13 +93,21 @@
         "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
         "import/first": "error",
         "import/no-commonjs": "error",
-        "import/no-duplicates": "error"
+        "import/no-duplicates": "error",
+        "prefer-const": "error",
+        "no-misleading-character-class": "error",
+        "typescript/no-unnecessary-condition": "error",
+        "typescript/method-signature-style": ["error", "property"],
+        "import/newline-after-import": "error",
+        "unicorn/prefer-node-protocol": "error",
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "warn"
       },
       "env": {
         "es2020": true,
         "browser": true
       },
-      "plugins": ["typescript", "import"]
+      "plugins": ["typescript", "import", "unicorn", "react"]
     }
   ]
 }
