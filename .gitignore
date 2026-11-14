@@ -14,6 +14,7 @@ htmlcov/
 .env.*
 !.env.example
 *.sql
+!/seed.sql
 /teller/
 
 # scripts/ holds local one-off scripts and data; only these files are shipped
