@@ -5,22 +5,26 @@ from typing import Annotated, Optional
 from fastapi import Depends
 from sqlmodel import Session
 
-from exchangerate.adapter.exchangerates_client import IExchangeRateClient, ExchangeratesApiIoClient, \
-    MastercardClient
+from exchangerate.adapter.exchangerates_client import IExchangeRateClient, ExchangeratesApiIoClient, MastercardClient
 from exchangerate.dataaccess.exchangerate_repository import ExchangeRateRepository
 from models import Transaction, ExchangeRate, Account
 from persistence import require_persisted_id
 
 
 class ExchangeRateService:
-    def __init__(self, mastercard: Annotated[IExchangeRateClient, Depends(MastercardClient)],
-                 exchangeratesio: Annotated[IExchangeRateClient, Depends(ExchangeratesApiIoClient)],
-                 repository: Annotated[ExchangeRateRepository, Depends()]):
+    def __init__(
+        self,
+        mastercard: Annotated[IExchangeRateClient, Depends(MastercardClient)],
+        exchangeratesio: Annotated[IExchangeRateClient, Depends(ExchangeratesApiIoClient)],
+        repository: Annotated[ExchangeRateRepository, Depends()],
+    ):
         self.mastercard = mastercard
         self.exchangeratesio = exchangeratesio
         self.repository = repository
-        
-    def fetch_exchange_rates(self, session: Session, account: Account, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD):
+
+    def fetch_exchange_rates(
+        self, session: Session, account: Account, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD
+    ):
         account_id = require_persisted_id(account)
         transactions = self.repository.get_transactions_without_eur_amount(session, account_id)
         [self.get_exchange_rate(session, date, source) for date in set([tx.date for tx in transactions])]
@@ -34,7 +38,9 @@ class ExchangeRateService:
         except Exception:
             return None
 
-    def get_exchange_rate(self, session: Session, date: datetime.date, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD) -> Optional[Decimal]:
+    def get_exchange_rate(
+        self, session: Session, date: datetime.date, source: ExchangeRate.Source = ExchangeRate.Source.MASTERCARD
+    ) -> Optional[Decimal]:
         er = self.repository.get_exchange_rate(session, date, source)
         if not er:
             if source == ExchangeRate.Source.MASTERCARD:
@@ -43,7 +49,7 @@ class ExchangeRateService:
                 rate = self.exchangeratesio.get_conversion_rate(date)
             else:
                 raise Exception("Not implemented")
-            
+
             if rate:
                 self.repository.persist_exchange_rate(session, date, source, rate)
                 session.commit()

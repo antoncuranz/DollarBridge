@@ -20,4 +20,3 @@ class ExchangeRateFacade:
 
     def get_exchange_rate(self, session: Session, date: datetime.date) -> Decimal | None:
         return self.exchangerate_service.get_exchange_rate(session, date)
-

@@ -81,7 +81,9 @@ class StatementMatchService:
         self.llm_client = llm_client
         self.exchangerate = exchangerate
 
-    def match_statement(self, session: Session, user: User, account_id: int, pdf_content: bytes) -> StatementMatchResponse:
+    def match_statement(
+        self, session: Session, user: User, account_id: int, pdf_content: bytes
+    ) -> StatementMatchResponse:
         account = self.store.get_account(session, user, account_id)
         if not account:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -114,8 +116,12 @@ class StatementMatchService:
             raw_response = self.llm_client.match_statement(prompt)
             validated = self._validate_results(candidate_payload, raw_response)
         except (LlmProviderError, ValidationError, ValueError) as exc:
-            logger.warning("statement_match_failed account_id=%s stage=provider error=%s", account_id, exc, exc_info=True)
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Statement match provider failed.") from exc
+            logger.warning(
+                "statement_match_failed account_id=%s stage=provider error=%s", account_id, exc, exc_info=True
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY, detail="Statement match provider failed."
+            ) from exc
 
         logger.info(
             "statement_match_llm_completed account_id=%s candidate_count=%s model=%s",
@@ -183,7 +189,9 @@ class StatementMatchService:
             f"Statement text:\n{statement_text}"
         )
 
-    def _validate_results(self, candidates: list[CandidateTransaction], raw_response: dict[str, Any]) -> list[RawStatementMatchResult]:
+    def _validate_results(
+        self, candidates: list[CandidateTransaction], raw_response: dict[str, Any]
+    ) -> list[RawStatementMatchResult]:
         payload = RawStatementMatchResponse.model_validate(raw_response)
         candidate_ids = [candidate.transaction_id for candidate in candidates]
         result_ids = [result.transaction_id for result in payload.results]

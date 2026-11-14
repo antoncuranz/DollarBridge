@@ -14,11 +14,14 @@ class DataExportFacade:
     def export_transactions(self, session: Session, user: User, account_id: int):
         self.actual_service.export_transactions(session, user, account_id)
 
-    def update_transactions(self, session: Session, user: User, account_id: int, transactions: List[Transaction] | None = None):
+    def update_transactions(
+        self, session: Session, user: User, account_id: int, transactions: List[Transaction] | None = None
+    ):
         self.actual_service.update_transactions(session, user, account_id, transactions)
 
-    def try_update_transactions(self, session: Session, user: User, account_id: int,
-                                transactions: List[Transaction]) -> List[int]:
+    def try_update_transactions(
+        self, session: Session, user: User, account_id: int, transactions: List[Transaction]
+    ) -> List[int]:
         """Updates the transactions in Actual and returns the ids of those that failed."""
         return self.actual_service.try_update_transactions(session, user, account_id, transactions)
 

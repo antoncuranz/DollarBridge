@@ -23,8 +23,23 @@ async def lifespan(app: FastAPI):
     yield
     # on shutdown
 
+
 app = FastAPI(dependencies=[Depends(verify_user_header)], lifespan=lifespan)
-for module in [user, accounts, balances, bank_accounts, credits, dates, exchanges, payments, transactions, import_routes, plaid_routes, statement_match, data_export]:
+for module in [
+    user,
+    accounts,
+    balances,
+    bank_accounts,
+    credits,
+    dates,
+    exchanges,
+    payments,
+    transactions,
+    import_routes,
+    plaid_routes,
+    statement_match,
+    data_export,
+]:
     app.include_router(module.router)
 
 app.mount("/metrics", make_prometheus_app())

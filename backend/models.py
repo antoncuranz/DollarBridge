@@ -109,16 +109,19 @@ class PaymentBase(SQLModel):
         POSTED = 2
         PROCESSED = 3
 
+
 class Payment(PaymentBase, table=True):
     amount_eur: int | None = None
     account: Account = Relationship()
     exchanges: List["ExchangePayment"] = Relationship(cascade_delete=True)
     transactions: List["Transaction"] = Relationship()
 
+
 class PaymentWithAmounts(PaymentBase):
     amount_eur_with_fx: int | None
     amount_eur_without_fx: int | None
     exchanges: List["ExchangePayment"]
+
 
 class Exchange(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -187,7 +190,7 @@ class TransactionWithGuessedAmount(TransactionBase):
     credits: List["CreditTransaction"]
     exchange_rate: Decimal | None
     cashback_exchange_id: int | None
-    
+
 
 class Credit(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -231,4 +234,3 @@ class ExchangeRate(SQLModel, table=True):
         IBKR = 1
         MASTERCARD = 2
         EXCHANGERATESIO = 3
-

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 
+
 class Config(BaseSettings):
     postgres_host: str = "localhost"
     postgres_password: str = "postgres"
@@ -31,5 +32,6 @@ class Config(BaseSettings):
     statement_match_base_url: str | None = None
     statement_match_model: str | None = None
     statement_match_max_tokens: int = 30000
+
 
 config = Config()

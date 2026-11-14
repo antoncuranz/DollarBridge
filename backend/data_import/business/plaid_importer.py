@@ -12,8 +12,9 @@ from models import Transaction, Account, BankAccount
 
 
 class PlaidImporter(AbstractImporter):
-    def __init__(self, repository: Annotated[DataImportRepository, Depends()],
-                 plaid_service: Annotated[PlaidService, Depends()]):
+    def __init__(
+        self, repository: Annotated[DataImportRepository, Depends()], plaid_service: Annotated[PlaidService, Depends()]
+    ):
         super().__init__(repository)
         self.plaid_service = plaid_service
 
@@ -23,7 +24,7 @@ class PlaidImporter(AbstractImporter):
         balance = self.plaid_service.get_account_balance(bank_account.plaid_account)
         bank_account.balance = balance
         session.add(bank_account)
-    
+
     def import_transactions(self, session: Session, account: Account):
         plaid_account = account.plaid_account
         if plaid_account is None:
@@ -39,9 +40,16 @@ class PlaidImporter(AbstractImporter):
                         if pending_tx is not None:
                             created_tx.amount_eur = pending_tx.amount_eur
                             session.add(created_tx)
-                            
+
                 elif not tx["pending"]:
-                    payment_strings = ["AUTOPAY PAYMENT", "AUTOPAY PYMT", "MOBILE PAYMENT", "MOBILE PYMT", "PAYMENT THANK YOU", "AUTOMATIC PAYMENT"]
+                    payment_strings = [
+                        "AUTOPAY PAYMENT",
+                        "AUTOPAY PYMT",
+                        "MOBILE PAYMENT",
+                        "MOBILE PYMT",
+                        "PAYMENT THANK YOU",
+                        "AUTOMATIC PAYMENT",
+                    ]
                     if any(payment_string in tx["name"].upper() for payment_string in payment_strings):
                         self._process_payment(session, account, tx)
                     else:
@@ -49,24 +57,23 @@ class PlaidImporter(AbstractImporter):
             except Exception:
                 print("Error processing plaid transaction: " + self._print_tx(tx))
                 traceback.print_exc()
-        
+
         for tx in removed:
             payment = self.repository.get_payment_by_import_id(session, tx["transaction_id"])
             if payment is not None:
                 session.delete(payment)
-                
+
             credit = self.repository.get_credit_by_import_id(session, tx["transaction_id"])
             if credit is not None:
                 session.delete(credit)
-                
+
             tx = self.repository.get_transaction_by_import_id(session, tx["transaction_id"])
             if tx is not None:
                 session.delete(tx)
-        
+
         plaid_account.cursor = next_cursor
         session.add(plaid_account)
         session.commit()
-        
 
     def _posted_date(self, tx):
         # "date" is the posting date; "authorized_date" (the purchase) is what is shown
@@ -81,5 +88,5 @@ class PlaidImporter(AbstractImporter):
             "counterparty": counterparty or tx["merchant_name"] or tx["name"],
             "description": tx["name"],
             "amount_usd": abs(int(Decimal(tx["amount"] * 100).quantize(1))),
-            "status": Transaction.Status.PENDING.value if tx["pending"] else Transaction.Status.POSTED.value
+            "status": Transaction.Status.PENDING.value if tx["pending"] else Transaction.Status.POSTED.value,
         }

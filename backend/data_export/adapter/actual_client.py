@@ -12,7 +12,7 @@ class IActualClient(abc.ABC):
     @abc.abstractmethod
     def create_transaction(self, account: Account, transaction: openapi.Transaction):
         pass
-    
+
     @abc.abstractmethod
     def create_transaction_super_misc(self, super_user: User, transaction: openapi.Transaction):
         pass
@@ -43,7 +43,6 @@ class ActualClient(IActualClient):
         self.api_key = config.actual_api_key
         self.base_url = config.actual_base_url
 
-
     def create_transaction(self, account: Account, transaction: openapi.Transaction):
         user = account.user
         url = f"{self.base_url}/v1/budgets/{user.actual_sync_id}/accounts/{account.actual_id}/transactions"
@@ -54,15 +53,12 @@ class ActualClient(IActualClient):
         if user.actual_encryption_password is not None:
             headers["budget-encryption-password"] = user.actual_encryption_password
 
-        payload = {
-            "transaction": transaction.model_dump(exclude_unset=True)
-        }
+        payload = {"transaction": transaction.model_dump(exclude_unset=True)}
 
         response = requests.post(url, headers=headers, json=payload)
 
         if not response.ok:
             response.raise_for_status()
-
 
     def create_transaction_super_misc(self, super_user: User, transaction: openapi.Transaction):
         url = f"{self.base_url}/v1/budgets/{super_user.actual_sync_id}/accounts/{super_user.actual_misc_account}/transactions"
@@ -73,20 +69,19 @@ class ActualClient(IActualClient):
         if super_user.actual_encryption_password is not None:
             headers["budget-encryption-password"] = super_user.actual_encryption_password
 
-        payload = {
-            "transaction": transaction.model_dump(exclude_unset=True)
-        }
+        payload = {"transaction": transaction.model_dump(exclude_unset=True)}
 
         response = requests.post(url, headers=headers, json=payload)
 
         if not response.ok:
             response.raise_for_status()
 
-
     def get_transaction(self, account: Account, tx: Transaction) -> Optional[openapi.Transaction]:
         user = account.user
-        url = f"{self.base_url}/v1/budgets/{user.actual_sync_id}/accounts/{account.actual_id}/transactions" \
-              + f"?since_date={tx.date}&until_date={tx.date}"
+        url = (
+            f"{self.base_url}/v1/budgets/{user.actual_sync_id}/accounts/{account.actual_id}/transactions"
+            + f"?since_date={tx.date}&until_date={tx.date}"
+        )
         headers = {
             "x-api-key": self.api_key,
         }
@@ -97,15 +92,14 @@ class ActualClient(IActualClient):
 
         if not response.ok:
             response.raise_for_status()
-            
+
         data = response.json()["data"]
-        
+
         found = next((actual_tx for actual_tx in data if actual_tx["id"] == tx.actual_id), None)
         if not found:
             return None
-        
-        return openapi.Transaction(**found)
 
+        return openapi.Transaction(**found)
 
     def patch_transaction(self, account: Account, actual_tx: openapi.Transaction, updated_fields):
         user = account.user
@@ -126,12 +120,9 @@ class ActualClient(IActualClient):
         if not response.ok:
             response.raise_for_status()
 
-
     def delete_transaction(self, user: User, actual_id: str):
         url = f"{self.base_url}/v1/budgets/{user.actual_sync_id}/transactions/{actual_id}"
-        headers = {
-            'x-api-key': self.api_key
-        }
+        headers = {"x-api-key": self.api_key}
         if user.actual_encryption_password is not None:
             headers["budget-encryption-password"] = user.actual_encryption_password
 
@@ -139,7 +130,6 @@ class ActualClient(IActualClient):
 
         if not response.ok:
             response.raise_for_status()
-
 
     def get_payees(self, user: User) -> List[openapi.Payee]:
         url = f"{self.base_url}/v1/budgets/{user.actual_sync_id}/payees"
@@ -155,7 +145,6 @@ class ActualClient(IActualClient):
             response.raise_for_status()
 
         return [openapi.Payee(**payee) for payee in response.json()["data"]]
-
 
     def create_payee(self, user: User, payee_name: str) -> str:
         url = f"{self.base_url}/v1/budgets/{user.actual_sync_id}/payees"

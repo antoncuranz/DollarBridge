@@ -10,15 +10,19 @@ class CreditRepository:
         stmt = select(Credit).where((Credit.id == credit_id) & (Credit.account_id == account_id))
         return session.exec(stmt).first()
 
-    def get_credits(self, session: Session, user: User, account_id: int | None, usable: bool | None = None) -> List[Credit]:
+    def get_credits(
+        self, session: Session, user: User, account_id: int | None, usable: bool | None = None
+    ) -> List[Credit]:
         query = col(Account.user_id) == user.id
 
         if usable is True:
             amount_used = (
-                select(func.sum(CreditTransaction.amount)).join(Transaction)
+                select(func.sum(CreditTransaction.amount))
+                .join(Transaction)
                 .where(
                     (CreditTransaction.credit_id == Credit.id) & (Transaction.status == Transaction.Status.PAID.value)
-                ).scalar_subquery()
+                )
+                .scalar_subquery()
             )
             query = query & (col(Credit.amount_usd) > func.coalesce(amount_used, 0))
 
@@ -32,14 +36,14 @@ class CreditRepository:
         return list(session.exec(select(Credit)).all())
 
     def get_posted_credit_amount(self, session: Session, account_id: int) -> int:
-        stmt = select(func.sum(Credit.amount_usd)).where(
-            (Credit.account_id == account_id)
-        )
+        stmt = select(func.sum(Credit.amount_usd)).where((Credit.account_id == account_id))
         return session.exec(stmt).first() or 0
 
     #### CREDIT TRANSACTIONS ####
 
-    def get_credit_transaction(self, session: Session, credit_id: int, transaction_id: int) -> Optional[CreditTransaction]:
+    def get_credit_transaction(
+        self, session: Session, credit_id: int, transaction_id: int
+    ) -> Optional[CreditTransaction]:
         stmt = select(CreditTransaction).where(
             (CreditTransaction.credit_id == credit_id) & (CreditTransaction.transaction_id == transaction_id)
         )
@@ -58,8 +62,9 @@ class CreditRepository:
         if ct:
             session.delete(ct)
 
-    def get_or_create_credit_transaction(self, session: Session, credit_id: int, transaction_id: int, amount: int)\
-            -> tuple[CreditTransaction, bool]:
+    def get_or_create_credit_transaction(
+        self, session: Session, credit_id: int, transaction_id: int, amount: int
+    ) -> tuple[CreditTransaction, bool]:
         model = self.get_credit_transaction(session, credit_id, transaction_id)
         created = model is None
         if model is None:

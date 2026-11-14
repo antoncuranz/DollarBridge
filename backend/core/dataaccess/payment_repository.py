@@ -11,13 +11,23 @@ class PaymentRepository:
         stmt = select(Payment).where(Payment.id == payment_id)
         return session.exec(stmt).first()
 
-    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None,
-                     date_from: datetime.date | None = None, date_to: datetime.date | None = None):
+    def get_payments(
+        self,
+        session: Session,
+        user: User,
+        account_id: int | None,
+        processed: bool | None = None,
+        date_from: datetime.date | None = None,
+        date_to: datetime.date | None = None,
+    ):
         query = (col(Account.user_id) == user.id) if not user.super_user else true()
 
         if processed is not None:
             query = query & (
-                Payment.status == Payment.Status.PROCESSED.value if processed else Payment.status != Payment.Status.PROCESSED.value)
+                Payment.status == Payment.Status.PROCESSED.value
+                if processed
+                else Payment.status != Payment.Status.PROCESSED.value
+            )
 
         if account_id is not None:
             query = query & (Payment.account_id == account_id)
@@ -31,10 +41,7 @@ class PaymentRepository:
         return list(session.exec(stmt).all())
 
     def get_unprocessed_payment(self, session: Session, payment_id: int) -> Optional[Payment]:
-        stmt = select(Payment).where(
-            (Payment.id == payment_id) &
-            (Payment.status != Payment.Status.PROCESSED.value)
-        )
+        stmt = select(Payment).where((Payment.id == payment_id) & (Payment.status != Payment.Status.PROCESSED.value))
         return session.exec(stmt).first()
 
     def get_posted_payment_amount(self, session: Session, account_id: int) -> int:

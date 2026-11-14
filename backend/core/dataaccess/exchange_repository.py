@@ -13,10 +13,12 @@ class ExchangeRepository:
         query: ColumnElement[bool] = true()
         if usable is True:
             amount_used = (
-                select(func.sum(ExchangePayment.amount)).join(Payment)
+                select(func.sum(ExchangePayment.amount))
+                .join(Payment)
                 .where(
                     (ExchangePayment.exchange_id == Exchange.id) & (Payment.status == Payment.Status.PROCESSED.value)
-                ).scalar_subquery()
+                )
+                .scalar_subquery()
             )
             query = col(Exchange.amount_usd) > func.coalesce(amount_used, 0)
 
@@ -27,12 +29,25 @@ class ExchangeRepository:
         stmt = select(Exchange).where(Exchange.id == exchange_id)
         return session.exec(stmt).first()
 
-    def create_exchange(self, session: Session, date: datetime.date, amount_usd: int, exchange_rate: Decimal,
-                        amount_eur: int, paid_eur: int, fees_eur: int,
-                        cashback_transaction_id: int | None = None) -> Exchange:
+    def create_exchange(
+        self,
+        session: Session,
+        date: datetime.date,
+        amount_usd: int,
+        exchange_rate: Decimal,
+        amount_eur: int,
+        paid_eur: int,
+        fees_eur: int,
+        cashback_transaction_id: int | None = None,
+    ) -> Exchange:
         exchange = Exchange(
-            date=date, amount_usd=amount_usd, exchange_rate=exchange_rate, amount_eur=amount_eur,
-            paid_eur=paid_eur, fees_eur=fees_eur, cashback_transaction_id=cashback_transaction_id
+            date=date,
+            amount_usd=amount_usd,
+            exchange_rate=exchange_rate,
+            amount_eur=amount_eur,
+            paid_eur=paid_eur,
+            fees_eur=fees_eur,
+            cashback_transaction_id=cashback_transaction_id,
         )
         session.add(exchange)
         return exchange
@@ -56,13 +71,17 @@ class ExchangeRepository:
     def get_cashback_transaction_descriptions(self, session: Session, exchange_ids: List[int]) -> Dict[int, str]:
         if not exchange_ids:
             return {}
-        stmt = select(Exchange.id, Transaction.description).join(
-            Transaction, col(Transaction.id) == col(Exchange.cashback_transaction_id)
-        ).where(col(Exchange.id).in_(exchange_ids))
-        return {exchange_id: description for exchange_id, description in session.exec(stmt).all() if exchange_id is not None}
+        stmt = (
+            select(Exchange.id, Transaction.description)
+            .join(Transaction, col(Transaction.id) == col(Exchange.cashback_transaction_id))
+            .where(col(Exchange.id).in_(exchange_ids))
+        )
+        return {
+            exchange_id: description for exchange_id, description in session.exec(stmt).all() if exchange_id is not None
+        }
 
     #### EXCHANGE PAYMENTS ####
-    
+
     def get_exchange_payment(self, session: Session, exchange_id: int, payment_id: int) -> Optional[ExchangePayment]:
         stmt = select(ExchangePayment).where(
             (ExchangePayment.exchange_id == exchange_id) & (ExchangePayment.payment_id == payment_id)
@@ -87,13 +106,14 @@ class ExchangeRepository:
             raise RuntimeError("Exchange payment not found!")
         session.delete(ep)
 
-    def get_or_create_exchange_payment(self, session: Session, exchange_id: int, payment_id: int, amount: int)\
-            -> tuple[ExchangePayment, bool]:
+    def get_or_create_exchange_payment(
+        self, session: Session, exchange_id: int, payment_id: int, amount: int
+    ) -> tuple[ExchangePayment, bool]:
         model = self.get_exchange_payment(session, exchange_id, payment_id)
         created = model is None
 
         if model is None:
             model = ExchangePayment(exchange_id=exchange_id, payment_id=payment_id, amount=amount)
         session.add(model)
-        
+
         return model, created

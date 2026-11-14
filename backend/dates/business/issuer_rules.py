@@ -22,6 +22,7 @@ class IssuerRule:
     """How an issuer derives the autopay date and the statement closing date from the due date.
 
     The rules were read off real payments (see tests/business/test_date_service.py)."""
+
     weekend_shift: WeekendShift
     # exactly one of the two is set
     statement_days_before_due: int | None = None

@@ -12,8 +12,9 @@ MQTT_CONFIG = {
     "port": 443,
     "transport": "websockets",
     "auth": {"username": config.mqtt_user, "password": config.mqtt_passwd},
-    "tls": {"ca_certs": "root.pem"}
+    "tls": {"ca_certs": "root.pem"},
 }
+
 
 class IQuilttClient:
     def get_account_balance(self, account_import_id, token):

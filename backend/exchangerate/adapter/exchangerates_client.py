@@ -30,7 +30,7 @@ class MastercardClient(IExchangeRateClient):
             "transaction_currency": "EUR",
             "cardholder_billing_currency": "USD",
             "bank_fee": 0,
-            "transaction_amount": 100
+            "transaction_amount": 100,
         }
 
         try:

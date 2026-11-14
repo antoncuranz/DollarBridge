@@ -29,35 +29,48 @@ class ExchangeTO(SQLModel):
 
 
 @router.get("", response_model=List[ExchangeTO])
-def get_exchanges(session: Annotated[Session, Depends(get_session)],
-                  exchange_service: Annotated[ExchangeService, Depends()],
-                  usable: bool | None = None):
+def get_exchanges(
+    session: Annotated[Session, Depends(get_session)],
+    exchange_service: Annotated[ExchangeService, Depends()],
+    usable: bool | None = None,
+):
     exchanges = exchange_service.get_exchanges(session, usable)
     descriptions = exchange_service.get_cashback_transaction_descriptions(session, exchanges)
     return [
-        ExchangeTO.model_validate(exchange, update={
-            "cashback_transaction_description": descriptions.get(exchange.id) if exchange.id is not None else None,
-        })
+        ExchangeTO.model_validate(
+            exchange,
+            update={
+                "cashback_transaction_description": descriptions.get(exchange.id) if exchange.id is not None else None,
+            },
+        )
         for exchange in exchanges
     ]
 
 
 @router.post("", response_model=ExchangeTO)
-def post_exchange(session: Annotated[Session, Depends(get_session)],
-                  exchange_service: Annotated[ExchangeService, Depends()],
-                  exchange: CreateExchange):
+def post_exchange(
+    session: Annotated[Session, Depends(get_session)],
+    exchange_service: Annotated[ExchangeService, Depends()],
+    exchange: CreateExchange,
+):
     return exchange_service.create_exchange(session, exchange)
 
 
 @router.delete("/{exchange_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_exchange(session: Annotated[Session, Depends(get_session)],
-                    exchange_service: Annotated[ExchangeService, Depends()],
-                    exchange_id: int):
+def delete_exchange(
+    session: Annotated[Session, Depends(get_session)],
+    exchange_service: Annotated[ExchangeService, Depends()],
+    exchange_id: int,
+):
     exchange_service.delete_exchange(session, exchange_id)
 
 
 @router.put("/{exchange_id}", status_code=status.HTTP_204_NO_CONTENT)
-def update_exchange(session: Annotated[Session, Depends(get_session)],
-                    exchange_service: Annotated[ExchangeService, Depends()],
-                    exchange_id: int, amount: int, payment: int):
+def update_exchange(
+    session: Annotated[Session, Depends(get_session)],
+    exchange_service: Annotated[ExchangeService, Depends()],
+    exchange_id: int,
+    amount: int,
+    payment: int,
+):
     exchange_service.update_exchange(session, exchange_id, amount, payment)

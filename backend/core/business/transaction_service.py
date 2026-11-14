@@ -23,15 +23,25 @@ class TransactionAmountsResult(SQLModel):
 
 
 class TransactionService:
-    def __init__(self, store: Annotated[Store, Depends()],
-                 data_export: Annotated[DataExportFacade, Depends()],
-                 exchangerate: Annotated[ExchangeRateFacade, Depends()]):
+    def __init__(
+        self,
+        store: Annotated[Store, Depends()],
+        data_export: Annotated[DataExportFacade, Depends()],
+        exchangerate: Annotated[ExchangeRateFacade, Depends()],
+    ):
         self.store = store
         self.data_export = data_export
         self.exchangerate = exchangerate
 
-    def get_transactions_with_guessed_amount(self, session: Session, user: User, account_id: int | None = None, paid: bool | None = None,
-                                             paid_from: datetime.date | None = None, paid_to: datetime.date | None = None) -> List[TransactionWithGuessedAmount]:
+    def get_transactions_with_guessed_amount(
+        self,
+        session: Session,
+        user: User,
+        account_id: int | None = None,
+        paid: bool | None = None,
+        paid_from: datetime.date | None = None,
+        paid_to: datetime.date | None = None,
+    ) -> List[TransactionWithGuessedAmount]:
         transactions = self.store.get_transactions(session, user, account_id, paid, paid_from, paid_to)
         cashback_exchange_ids = self.store.get_cashback_exchange_ids(
             session, [transaction.id for transaction in transactions if transaction.id is not None]
@@ -44,20 +54,24 @@ class TransactionService:
             if amount_eur is not None and amount_eur != 0:
                 exchange_rate = (transaction.amount_usd / Decimal(amount_eur)).quantize(Decimal("0.00000001"))
 
-            return TransactionWithGuessedAmount.model_validate(transaction, update={
-                "guessed_amount_eur": guessed_amount_eur,
-                "exchange_rate": exchange_rate,
-                "cashback_exchange_id": cashback_exchange_ids.get(transaction.id) if transaction.id is not None else None,
-            })
+            return TransactionWithGuessedAmount.model_validate(
+                transaction,
+                update={
+                    "guessed_amount_eur": guessed_amount_eur,
+                    "exchange_rate": exchange_rate,
+                    "cashback_exchange_id": cashback_exchange_ids.get(transaction.id)
+                    if transaction.id is not None
+                    else None,
+                },
+            )
 
         return [map_transaction(tx) for tx in transactions]
-
 
     def update_transaction(self, session: Session, user: User, tx_id: int, amount_eur):
         transaction = self.store.get_transaction(session, user, tx_id)
         if not transaction:
             raise HTTPException(status_code=404)
-        
+
         transaction.amount_eur = amount_eur
         session.add(transaction)
         session.commit()
@@ -66,8 +80,9 @@ class TransactionService:
             account_id = require_persisted_id(transaction.account)
             self.data_export.update_transaction(session, user, account_id, transaction)
 
-    def update_transaction_amounts(self, session: Session, user: User,
-                                   amounts: List[TransactionAmount]) -> TransactionAmountsResult:
+    def update_transaction_amounts(
+        self, session: Session, user: User, amounts: List[TransactionAmount]
+    ) -> TransactionAmountsResult:
         """Saves all amounts in one database transaction, then syncs them to Actual.
 
         The Actual sync is not part of the atomic save: transactions whose sync failed are
@@ -102,7 +117,9 @@ class TransactionService:
             raise HTTPException(status_code=404)
 
         if transaction.status_enum != Transaction.Status.POSTED or transaction.amount_usd <= 0:
-            raise HTTPException(status_code=400, detail="Only posted transactions with a positive USD amount can be marked as cashback")
+            raise HTTPException(
+                status_code=400, detail="Only posted transactions with a positive USD amount can be marked as cashback"
+            )
 
         transaction_id = require_persisted_id(transaction)
         if self.store.get_cashback_exchange(session, transaction_id) is not None:

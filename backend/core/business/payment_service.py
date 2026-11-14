@@ -15,24 +15,37 @@ from persistence import require_persisted_id
 
 
 class PaymentService:
-    def __init__(self, store: Annotated[Store, Depends()],
-                 balance_service: Annotated[BalanceService, Depends()],
-                 exchange_service: Annotated[ExchangeService, Depends()],
-                 data_export: Annotated[DataExportFacade, Depends()]):
+    def __init__(
+        self,
+        store: Annotated[Store, Depends()],
+        balance_service: Annotated[BalanceService, Depends()],
+        exchange_service: Annotated[ExchangeService, Depends()],
+        data_export: Annotated[DataExportFacade, Depends()],
+    ):
         self.store = store
         self.balance_service = balance_service
         self.exchange_service = exchange_service
         self.data_export = data_export
-    
-    def get_payments(self, session: Session, user: User, account_id: int | None, processed: bool | None = None,
-                     date_from: datetime.date | None = None, date_to: datetime.date | None = None):
+
+    def get_payments(
+        self,
+        session: Session,
+        user: User,
+        account_id: int | None,
+        processed: bool | None = None,
+        date_from: datetime.date | None = None,
+        date_to: datetime.date | None = None,
+    ):
         payments = self.store.get_payments(session, user, account_id, processed, date_from, date_to)
 
         def map_payment(payment: Payment):
-            return PaymentWithAmounts.model_validate(payment, update={
-                "amount_eur_with_fx": payment.amount_eur,
-                "amount_eur_without_fx": self._calc_amount_eur_without_fx(session, payment)
-            })
+            return PaymentWithAmounts.model_validate(
+                payment,
+                update={
+                    "amount_eur_with_fx": payment.amount_eur,
+                    "amount_eur_without_fx": self._calc_amount_eur_without_fx(session, payment),
+                },
+            )
 
         return [map_payment(payment) for payment in payments]
 
@@ -56,10 +69,12 @@ class PaymentService:
             total += transaction.amount_eur
         return total
 
-    def process_payment(self, session: Session, super_user: User, payment_id: int, transaction_ids: list[int] | None = None):
+    def process_payment(
+        self, session: Session, super_user: User, payment_id: int, transaction_ids: list[int] | None = None
+    ):
         if not super_user.super_user:
             raise HTTPException(status_code=403)
-        
+
         payment = self.store.get_payment_unsafe(session, payment_id)
         if not payment:
             raise HTTPException(status_code=404)
@@ -76,9 +91,7 @@ class PaymentService:
 
         account_id = require_persisted_id(payment.account)
         actual_payment_id = None
-        original_actual_ids = {
-            require_persisted_id(tx): tx.actual_id for tx in transactions
-        }
+        original_actual_ids = {require_persisted_id(tx): tx.actual_id for tx in transactions}
 
         try:
             self._process_payment(session, payment, transactions)
@@ -89,7 +102,8 @@ class PaymentService:
             session.commit()
         except Exception:
             created_transaction_actual_ids = {
-                tx.id: tx.actual_id for tx in transactions
+                tx.id: tx.actual_id
+                for tx in transactions
                 if tx.id is not None and original_actual_ids.get(tx.id) is None and tx.actual_id is not None
             }
             session.rollback()
@@ -102,11 +116,11 @@ class PaymentService:
                     pass
 
             raise
-    
+
     def unprocess_payment(self, session: Session, super_user: User, payment_id: int):
         if not super_user.super_user:
             raise HTTPException(status_code=403)
-        
+
         payment = self.store.get_payment_unsafe(session, payment_id)
         if not payment:
             raise HTTPException(status_code=404)
@@ -115,7 +129,7 @@ class PaymentService:
             raise HTTPException(status_code=400, detail="Only processed payments can be unprocessed")
 
         transactions = self.store.get_paid_transactions_by_payment(session, payment_id)
-        
+
         payment.status_enum = Payment.Status.POSTED
         payment.amount_eur = None
         session.add(payment)
@@ -189,7 +203,7 @@ class PaymentService:
     def _process_payment(self, session: Session, payment: Payment, transactions: List[Transaction]):
         if any(tx.amount_eur is None for tx in transactions):
             raise Exception("Error: All transactions must have amount_eur set!")
-        
+
         if payment.status_enum == Payment.Status.PENDING:
             raise Exception("Error: Payment is still pending!")
 
@@ -222,7 +236,7 @@ class PaymentService:
                 raise ValueError("Processed transaction is missing a EUR amount or fees")
             eur_sum += tx.amount_eur + tx.fees_and_risk_eur
         eur_err = rounded_amount_eur - eur_sum
-        print("Calculated eur_err of " + str(eur_err)) # TODO: send notification or display in frontend
+        print("Calculated eur_err of " + str(eur_err))  # TODO: send notification or display in frontend
 
         # apply error to largest transaction
         largest_tx = max(transactions, key=lambda tx: tx.amount_eur or 0)
@@ -230,7 +244,15 @@ class PaymentService:
             raise ValueError("Processed transaction is missing fees")
         largest_tx.fees_and_risk_eur = largest_tx.fees_and_risk_eur + eur_err
         session.add(largest_tx)
-    def _calc_fees_and_risk(self, session: Session, tx: Transaction, payment: Payment, exchange_payments: List[ExchangePayment], payment_amount_eur: Decimal) -> int:
+
+    def _calc_fees_and_risk(
+        self,
+        session: Session,
+        tx: Transaction,
+        payment: Payment,
+        exchange_payments: List[ExchangePayment],
+        payment_amount_eur: Decimal,
+    ) -> int:
         if tx.amount_eur == 0:
             return 0
         if tx.amount_eur is None:
@@ -245,7 +267,6 @@ class PaymentService:
 
         return round(effective_fees_total)
 
-
     def _calc_payment_amount_eur(self, exchange_payments: List[ExchangePayment]) -> Decimal:
         amount_eur = Decimal(0)
         for ep in exchange_payments:
@@ -253,8 +274,7 @@ class PaymentService:
                 amount_eur += (Decimal(ep.amount) / Decimal(ep.exchange.amount_usd)) * ep.exchange.amount_eur
 
         return amount_eur
-    
-    
+
     def _calc_neutral_sum(self, exchange_payments: List[ExchangePayment]) -> int:
         # Ignore "neutral" exchanges (i.e. exchange.paid_eur == 0). Ignored exchanges won't affect the avg rate.
 

@@ -13,8 +13,11 @@ from models import Transaction, Account
 
 
 class QuilttImporter(AbstractImporter):
-    def __init__(self, adapter: Annotated[IQuilttClient, Depends(QuilttClient)],
-                 repository: Annotated[DataImportRepository, Depends()]):
+    def __init__(
+        self,
+        adapter: Annotated[IQuilttClient, Depends(QuilttClient)],
+        repository: Annotated[DataImportRepository, Depends()],
+    ):
         super().__init__(repository)
         self.adapter = adapter
         self.token = None
@@ -33,7 +36,7 @@ class QuilttImporter(AbstractImporter):
                 if tx["amount"] > 0:
                     original_description = tx["remoteData"]["mx"]["transaction"]["response"]["originalDescription"]
                     payment_strings = ["AUTOPAY PAYMENT", "AUTOPAY PYMT", "MOBILE PAYMENT", "MOBILE PYMT"]
-                    
+
                     if any(payment_string in original_description for payment_string in payment_strings):
                         self._process_payment(session, account, tx)
                     else:
@@ -52,7 +55,7 @@ class QuilttImporter(AbstractImporter):
             "counterparty": tx["description"],
             "description": tx["remoteData"]["mx"]["transaction"]["response"]["originalDescription"],
             "amount_usd": abs(int(Decimal(tx["amount"] * 100).quantize(1))),
-            "status": Transaction.Status.POSTED.value
+            "status": Transaction.Status.POSTED.value,
         }
 
     def _get_token(self):
