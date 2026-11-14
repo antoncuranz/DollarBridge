@@ -9,7 +9,7 @@ FastAPI backend under `/api`.
 From the repository root:
 
 ```sh
-make dev   # database with pseudonymized data, backend on :8000, frontend on :3000
+make dev   # database with synthetic data, backend on :8000, frontend on :3000
 ```
 
 `make frontend` starts only the dev server (http://localhost:3000, proxies

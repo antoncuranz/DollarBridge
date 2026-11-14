@@ -10,7 +10,7 @@ docs: `backend/README.md`, `frontend/README.md`.
 | `backend/` | FastAPI + SQLModel API (Python 3.15, managed with uv), Alembic migrations, pytest suite |
 | `frontend/` | Vite + React SPA (TanStack Router/Query), served by nginx in production |
 | `scripts/` | Standalone helper scripts (e.g. `amex_import.py`), shipped as their own image |
-| `seed.sql` | Pseudonymized, reduced database dump for local development (`make db`) |
+| `seed.sql` | Synthetic database dump for local development (`make db`) |
 | `clone_db.sh` | Dumps the production DB (needs 1Password CLI + LAN access) into a local Postgres on port 5433 |
 | `orca.yaml` | Worktree setup for the Orca IDE (runs `make init-worktree`: installs backend and frontend dependencies) |
 | `.github/workflows/` | CI (see below) |
@@ -60,9 +60,10 @@ make backend    # or: make frontend
 make dev DB_PORT=5435 BACKEND_PORT=8001 FRONTEND_PORT=3001   # second instance, e.g. another worktree
 ```
 
-- `seed.sql` is pseudonymized and reduced (users `alice` (super user), `bob`, `carol`;
-  fake merchants, ids and secrets; randomized amounts). `DEV_USER` picks the user
-  the backend logs in as. The backend migrates it to the latest revision on startup.
+- `seed.sql` is synthetic data (not derived from production): users `alice`
+  (super user, three cards) and `bob` (one card), mid-September to mid-November 2026
+  with a paid statement per card, open transactions, credits and exchanges.
+  `DEV_USER` picks the user the backend logs in as. The backend migrates it to the latest revision on startup.
 - `make db` never overwrites a database that already has tables (e.g. a
   `clone_db.sh` copy on :5433); `make db-reset` does. Never use production data
   from `clone_db.sh` for agent work.

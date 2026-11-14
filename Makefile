@@ -45,7 +45,7 @@ db-reset: db
 	@$(MAKE) --no-print-directory db-load
 
 db-load:
-	@echo "loading seed.sql (users: alice, bob, carol)..."
+	@echo "loading seed.sql (users: alice, bob)..."
 	@$(PSQL) -q -v ON_ERROR_STOP=1 -f seed.sql >/dev/null
 
 db-stop:
