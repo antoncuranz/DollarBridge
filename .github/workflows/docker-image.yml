@@ -1,0 +1,106 @@
+name: Docker image
+
+# Reusable workflow: builds one image, scans it with Grype and pushes it to GHCR.
+#
+# Tags:
+#   push to main  -> latest, sha-<short>
+#   pull request  -> sha-<short of PR head commit>, pr-<number>
+#
+# Pull requests from forks only build and scan (no push), because their token
+# cannot write packages.
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: Docker build context (directory containing the Dockerfile)
+        required: true
+        type: string
+      image:
+        description: Image name below ghcr.io/antoncuranz/money-tracking/
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    name: Build ${{ inputs.image }} image
+    runs-on: ubuntu-latest
+    env:
+      PUSH: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      # Tag PR images with the PR head commit instead of the temporary merge commit.
+      DOCKER_METADATA_PR_HEAD_SHA: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Build exactly the commit the sha tag refers to.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/antoncuranz/money-tracking/${{ inputs.image }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short
+            type=ref,event=pr
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ inputs.context }}
+          load: true
+          tags: local/${{ inputs.image }}:scan
+          cache-from: type=gha,scope=${{ inputs.image }}
+
+      - name: Scan image with Grype
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          image: local/${{ inputs.image }}:scan
+          output-format: table
+          # Fail only on critical vulnerabilities that have a fix available.
+          severity-cutoff: critical
+          only-fixed: true
+          fail-build: true
+
+      - name: Login to GHCR
+        if: env.PUSH == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      # Reuses the layers of the scan build, so this mostly just pushes.
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ inputs.context }}
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image }}
+
+      - name: Summary
+        if: env.PUSH == 'true'
+        env:
+          IMAGE: ${{ inputs.image }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          {
+            echo "### ${IMAGE} image"
+            echo '```'
+            echo "${TAGS}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

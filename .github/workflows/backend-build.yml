@@ -6,29 +6,35 @@ on:
       - main
     paths:
       - 'backend/**'
+      - '.github/workflows/backend-*.yml'
+      - '.github/workflows/docker-image.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-*.yml'
+      - '.github/workflows/docker-image.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 jobs:
+  # On pull requests, backend-checks.yml already runs on its own (it is a required
+  # status check), so only gate the image on it for pushes to main.
   checks:
+    if: github.event_name == 'push'
     uses: ./.github/workflows/backend-checks.yml
 
   build:
     needs: checks
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Login to GHCR
-        uses: docker/login-action@v4.8.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Build and push backend
-        uses: docker/build-push-action@v7
-        with:
-          context: backend
-          push: true
-          tags: ghcr.io/antoncuranz/money-tracking/backend:latest
+    if: ${{ !cancelled() && needs.checks.result != 'failure' }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      context: backend
+      image: backend
