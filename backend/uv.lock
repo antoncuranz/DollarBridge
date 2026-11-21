@@ -903,7 +903,7 @@ requires-dist = [
     { name = "openai", specifier = "==3.51.0" },
     { name = "paho-mqtt", specifier = "==2.2.0" },
     { name = "pebble", specifier = "==5.2.3" },
-    { name = "plaid-python", specifier = "==46.0.0" },
+    { name = "plaid-python", specifier = "==47.0.0" },
     { name = "prometheus-client", specifier = "==0.26.0" },
     { name = "psycopg2-binary", specifier = "==2.9.13" },
     { name = "pydantic", specifier = "==2.14.4" },
@@ -1189,14 +1189,14 @@ wheels = [
 
 [[package]]
 name = "plaid-python"
-version = "46.0.0"
+version = "47.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nulltype" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/f5/aba2f7da7c6750e9faa4dc6a64172672a748a41959481e2eb7854c578d19/plaid_python-46.0.0.tar.gz", hash = "sha256:f1b06c1a653f0378caf50a4077d61de36074b2560d473a8c7cc1697a580910e7", size = 1365135, upload-time = "2026-10-19T22:03:21.332Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/37/06a9a7aa2b5360a3e119c8c9368308429032b71d033ff1a449ef1eeea216/plaid_python-47.0.0.tar.gz", hash = "sha256:7e4b373ae0babc742e673f29fa0e6206efcc7103f4b113dcf6f1ebe0cc252e69", size = 1427202, upload-time = "2026-11-17T21:32:01.22Z" }
 
 [[package]]
 name = "pluggy"
